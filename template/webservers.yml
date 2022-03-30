@@ -2,4 +2,4 @@
 - hosts: webservers
   roles:
     - common
-    - webtier
+    - web
