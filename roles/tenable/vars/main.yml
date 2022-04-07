@@ -1,0 +1,5 @@
+   vars:
+    nessus_key: 00abcd00000efgh11111i0k222lmopq3333st4455u66v777777w88xy9999zabc00 
+    agent_host: cloud.tenable.com 
+    agent_port: 443
+    

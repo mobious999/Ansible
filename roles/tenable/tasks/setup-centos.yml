@@ -1,0 +1,32 @@
+- hosts: webservers
+  become: yes
+  vars:
+    nessus_key: 00abcd00000efgh11111i0k222lmopq3333st4455u66v777777w88xy9999zabc00 
+    agent_group: webservers
+    agent_host: cloud.tenable.com 
+    agent_port: 443
+    agent_file_src: /tmp/NessusAgent-7.6.1-es7.x86_64.rpm 
+    agent_file_dest: /tmp/NessusAgent-7.6.1-es7.x86_64.rpm 
+  tasks:
+  - name: Check link status
+    shell: /opt/nessus_agent/sbin/nessuscli agent status; true
+    register: nessus_link_status
+  - name: Check Nessus Agent Service Status
+    shell: service nessusagent status; true
+    register: nessus_agent_service_status
+  - name: Copy rpm file to server
+    copy:
+     src: "{{ agent_file_src }}"
+     dest: "{{ agent_file_dest }}"
+    when: "'Linked to: {{ agent_host }}' not in nessus_link_status.stdout"
+  - name: Install Nessus Agent rpm from a local file
+    yum:
+      name: "{{ agent_file_dest }}"
+      state: present
+    when: "'Linked to: {{ agent_host }}' not in nessus_link_status.stdout"
+  - name: Link nessus agent to tenable
+    shell: /opt/nessus_agent/sbin/nessuscli agent link --host={{ agent_host }} --port={{ agent_port }} --key={{ nessus_key }} --groups={{ agent_group }}
+    when: "'Linked to: {{ agent_host }}' not in nessus_link_status.stdout"
+  - name: Starting Nessus Agent service
+    command: service nessusagent start
+    when: "('Linked to: {{ agent_host }}' not in nessus_link_status.stdout) and ('active (running)' not in nessus_agent_service_status.stdout)"
