@@ -14,16 +14,20 @@ tasks:
     when: ansible_facts['distribution'] == 'CentOS' and ansible_distribution_major_version == "8")
 
   - name: Performing Tasks for Redhat 7
-    include_tasks: rhel7.yml
+    include_tasks: RedHat-7.yml
     when: ansible_facts['distribution'] == 'RedHat' and ansible_distribution_major_version == "7")
 
   - name: Performing Tasks for Redhat 8
-    include_tasks: rhel8.yml
+    include_tasks: RedHat-8.yml
     when: ansible_facts['distribution'] == 'RedHat' and ansible_distribution_major_version == "8")
 
-  - name: Performing Tasks for Amazon Linux
-    include_tasks: amazon.yml
-    when: ansible_facts['distribution'] == 'Amazon' and ansible_distribution_major_version == "8")
+  - name: Performing Tasks for Amazon Linux 1
+    include_tasks: Amazon-1.yml
+    when: ansible_facts['distribution'] == 'Amazon' and ansible_distribution_major_version == "1")
+
+  - name: Performing Tasks for Amazon Linux 2
+    include_tasks: Amazon-2.yml
+    when: ansible_facts['distribution'] == 'Amazon' and ansible_distribution_major_version == "2")
 
   - name: Performing Tasks for Debian
     include_tasks: debian10.yml
@@ -34,7 +38,7 @@ tasks:
     when: ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_major_version'] == "20") # Only Ubuntu 20.04
 
   - name: Performing Tasks for Suse
-    include_tasks: centos.yml
+    include_tasks: Suse.yml
     when: ansible_facts['distribution'] == 'Suse'
 
   - name: "shut down CentOS 6 and Debian 7 systems"
