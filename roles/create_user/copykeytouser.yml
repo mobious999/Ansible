@@ -1,0 +1,21 @@
+---
+ - hosts: all
+   vars:
+     - ansible_password: 'Password123'
+   gather_facts: no
+   remote_user: root
+   become: true
+tasks:
+- name: SYSTEM - Create test user
+  tags: system-user
+  user: 
+    name: "{{ test_user }}"
+    state: present
+    createhome: yes
+
+- name: SYSTEM - Set authorized key for test_user took from file
+  tags: system-user
+  authorized_key:
+    user: "{{ test_user }}"
+    state: present
+    key: "{{ test_user_pubkey }}"
