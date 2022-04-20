@@ -1,0 +1,47 @@
+---
+# tasks file for ansible-role-java-open-jdk11
+
+- name: download Java installer
+  include_tasks: download.yml
+
+- name: 'copy Java cacerts file'
+  copy:
+    src: 'cacerts'
+    dest: '{{ java_security_folder }}/cacerts'
+    owner: root
+    group: root
+    backup: true
+    force: true
+
+- name: 'refresing {{ java_latest_folder }} link to {{ java_folder }}'
+  file:
+    src: '{{ java_folder }}'
+    dest: '{{ java_latest_folder }}'
+    owner: root
+    group: root
+    state: link
+
+- name: 'install Java environment variables'
+  template:
+    src: 'java.sh.j2'
+    dest: '/etc/profile.d/java.sh'
+    owner: root
+    group: root
+
+- name: 'link Java DK binaries'
+  become: true
+  alternatives: link="/usr/bin/{{ item }}" name="{{ item }}" path="{{ java_folder }}/bin/{{ item }}" priority={{ java_bins_priority }}
+  with_items: "{{ java_bins_jdk }}"
+  ignore_errors: yes
+  when:
+    - java_bins_update
+    - java_type == 'jdk'
+
+- name: 'link Java Server RE binaries'
+  become: true
+  alternatives: link="/usr/bin/{{ item }}" name="{{ item }}" path="{{ java_folder }}/bin/{{ item }}" priority={{ java_bins_priority }}
+  with_items: "{{ java_bins_server_jre }}"
+  ignore_errors: yes
+  when:
+    - java_bins_update
+    - java_type == 'server_jre'

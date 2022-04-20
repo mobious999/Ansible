@@ -1,0 +1,18 @@
+ hosts: all
+  task:
+
+  - name: get path
+    shell: which R
+    register: r_path
+
+  - name: create file in /etc/profile.d
+    shell: touch /etc/profile.d/rpath.sh
+    sudo: yes
+    args:
+      creates: /etc/profile.d/rpath.sh
+
+  - name: create environment variable and paste in file
+    shell: echo "export RHOME={{ r_path.stdout }}" > /etc/profile.d/rpath.sh
+
+  - name: reload profile
+    shell: source /etc/profile

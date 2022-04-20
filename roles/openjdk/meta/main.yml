@@ -1,0 +1,32 @@
+---
+galaxy_info:
+  role_name: java-open-jdk11
+  author: Kálmán Szalai - KAMI
+  description: "Ansible role for configuring Open JDK Java 11 or Server JRE with local installation support"
+  license: MIT
+  min_ansible_version: 1.9
+
+  galaxy_tags:
+    - development
+    - system
+    - java
+    - jdk
+    - openjdk
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - precise
+        - trusty
+        - xenial
+    - name: Debian
+      versions:
+        - wheezy
+        - jessie
+        - stretch
+    - name: EL
+      versions:
+        - 6
+        - 7
+
+dependencies: []

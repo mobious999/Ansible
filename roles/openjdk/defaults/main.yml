@@ -1,0 +1,39 @@
+---
+# defaults file for ansible-role-java-open-jdk11
+
+force_java_install: false
+
+java_installer_force_download: true
+java_installer_force_overwrite: true
+java_installer_keep: true
+java_installer_local: false
+
+java_bins_jdk: [ 'javap', 'jmap', 'pack200', 'jrunscript', 'jinfo', 'keytool', 'jjs', 'rmid', 'javadoc', 'rmic', 'jstatd', 'java', 'jdb', 'jar', 'rmiregistry', 'jps', 'javac', 'unpack200', 'jdeps', 'jcmd', 'jconsole', 'jarsigner', 'serialver', 'jstack', 'jstat' ]
+java_bins_server_jre: [ 'pack200', 'jrunscript', 'keytool', 'jjs', 'rmid', 'rmic', 'java', 'jar', 'rmiregistry', 'jps', 'javac', 'unpack200', 'jdeps', 'jcmd', 'jarsigner' ]
+
+java_bins_priority: 9
+java_bins_update: true
+
+java_type: jdk
+
+# JDK 11.0.2.9
+java_version: 11
+java_update: 2
+java_build: '9'
+
+# JDK 11.0.1.13
+# java_version: 11
+# java_update: 1
+# java_build: '13'
+
+# JDK 11.0.0.28
+# java_version: 11
+# java_update: 0
+# java_build: '28'
+
+java_platform: linux-x64
+
+java_usr_folder: /usr/java
+java_latest_folder: /usr/java/latest
+
+java_download_base_url: https://download.java.net/java/GA
