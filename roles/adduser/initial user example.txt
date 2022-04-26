@@ -1,0 +1,6 @@
+sudo -i
+sudo useradd -m -s /bin/bash ansible --create-home -c "Ansible User Account"
+echo "ansible" | passwd --stdin ansible
+echo "ansible ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/ansible
+su to the ansible user
+ssh-keygen -t rsa
