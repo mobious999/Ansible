@@ -3,7 +3,7 @@
    vars:
      - ansible_password: 'ansible'
    gather_facts: no
-   remote_user: ubuntu
+   remote_user: ec2-user
    become: true
 tasks:
 - name: Add a new user named ansible
