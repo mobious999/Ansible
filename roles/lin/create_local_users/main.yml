@@ -1,0 +1,25 @@
+---
+- hosts: "localhost"
+  connection: "local"
+  vars:
+    users:
+    - "paul"
+    - "tanya"
+    - "ruby"
+  tasks:
+  - name: "Create user accounts"
+    user:
+      name: "{{ item }}"
+      groups: "admin,www-data"
+    with_items: "{{ users }}"
+  - name: "Add authorized keys"
+    authorized_key:
+      user: "{{ item }}"
+      key: "{{ lookup('file', 'files/'+ item + '.key.pub') }}"
+    with_items: "{{ users }}"
+  - name: "Allow admin users to sudo without a password"
+    lineinfile:
+      dest: "/etc/sudoers" # path: in version 2.3
+      state: "present"
+      regexp: "^%admin"
+      line: "%admin ALL=(ALL) NOPASSWD: ALL"

@@ -3,7 +3,7 @@
    vars:
      - ansible_password: 'ansible'
    gather_facts: no
-   remote_user: ec2-user
+   remote_user: ubuntu
    become: true
 tasks:
 - name: Add a new user named ansible
@@ -11,7 +11,7 @@ tasks:
           name: ansible
           shell: /bin/bash
           password: "{{ ansible_password }}"
-- name: Add ansible user to the sudoers etc.d directory
+- name: Add ansible user to the sudoers
      copy:
           dest: "/etc/sudoers.d/ansible"
           content: "ansible  ALL=(ALL)  NOPASSWD: ALL"
