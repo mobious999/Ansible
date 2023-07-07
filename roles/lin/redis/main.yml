@@ -1,0 +1,33 @@
+---
+- hosts: all
+  remote_user: root
+  vars_files:
+    - "vars/common.yml"
+
+  tasks:
+  - name: Performing Tasks for CentOS
+    include_tasks: Centos.yml
+    when: ansible_facts['distribution'] == 'CentOS'
+  
+  - name: Performing Tasks for Redhat
+    include_tasks: RedHat.yml
+    when: ansible_facts['distribution'] == 'RedHat'
+
+  - name: Performing Tasks for Amazon
+    include_tasks: Amazon.yml
+    when: ansible_facts['distribution'] == 'Amazon'
+
+  - name: Performing Tasks for Debian
+    include_tasks: debian.yml
+    when: ansible_facts['distribution'] == 'Debian'
+
+  - name: Performing Tasks for Ubuntu
+    include_tasks: Ubuntu.yml
+    when: ansible_facts['distribution'] == 'Ubuntu'
+
+  - name: Performing Tasks for Suse
+    include_tasks: Suse.yml
+    when: ansible_facts['distribution'] == 'Suse'
+
+
+

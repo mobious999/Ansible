@@ -1,0 +1,78 @@
+- hosts: all
+  become: yes
+  remote_user: ansible
+
+  vars:
+      port_list:
+        - { port: 6379/tcp, state: enabled }
+        - { port: 26379/tcp, state: enabled }
+
+  vars_files:
+    - common.yml
+
+  handlers:
+    - name: restart redis
+      service:
+        name: redis
+        state: restarted
+    - name: restart sentinel
+      service:
+        name: redis-sentinel
+        state: restarted
+    - name: Restart firewalld
+      service:
+        name: firewalld
+        state: restarted		
+
+  tasks:
+    - name: install the latest version of Redis
+      yum:
+        name: redis
+        state: latest
+    - name: Enable ports on the list
+      firewalld:
+        zone: public
+        port: "{{ item.port }}"
+        permanent: true
+        state: "{{ item.state }}"
+      loop:
+        "{{ port_list }}"
+      notify:
+        - Restart firewalld
+    - name: Update redis.conf
+      lineinfile:
+        path: /etc/redis/redis.conf
+        regexp: "^{{ item.split(':')[0].strip() | regex_escape() }}.*$"
+        line: "{{ item.split(':')[0].strip() }} {{ item.split(':')[1].strip() }}"
+        state: present
+      loop: "{{ lookup('template', './redis.conf.j2').splitlines() | reject('match', '^$') | reject('match', '^#.*') | list }}"
+      register: redis_conf_file
+    - name: Start service Redis, if not started
+      service:
+        name: redis
+        state: started
+    - name: Enable service Redis, and not touch the state
+      service:
+        name: redis
+        enabled: yes
+    - name: Wait Redis to be Started
+      wait_for:
+        port: 6379
+    - name: Update sentinel.conf
+      lineinfile:
+        path: /etc/redis/sentinel.conf
+        regexp: "^{{ item.split(':')[0].strip() | regex_escape() }}.*$"
+        line: "{{ item.split(':')[0].strip() }} {{ item.split(':')[1].strip() }}"
+        state: present
+      loop: "{{ lookup('template', './sentinel.conf.j2').splitlines() | reject('match', '^$') | reject('match', '^#.*') | list }}"
+      register: sentinel_conf_file
+    - name: Enable service redis-sentinel and ensure it is not masked
+      ansible.builtin.systemd:
+        name: redis-sentinel
+        enabled: yes
+        masked: no
+    - name: restart sentinel
+      when: sentinel_conf_file is changed
+      service:
+        name: redis-sentinel
+        state: restarted
