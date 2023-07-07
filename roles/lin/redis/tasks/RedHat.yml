@@ -2,43 +2,15 @@
   become: yes
   remote_user: ansible
 
-  vars:
-      port_list:
-        - { port: 6379/tcp, state: enabled }
-        - { port: 26379/tcp, state: enabled }
-
   vars_files:
-    - common.yml
-
-  handlers:
-    - name: restart redis
-      service:
-        name: redis
-        state: restarted
-    - name: restart sentinel
-      service:
-        name: redis-sentinel
-        state: restarted
-    - name: Restart firewalld
-      service:
-        name: firewalld
-        state: restarted		
+    - main.yml
 
   tasks:
     - name: install the latest version of Redis
       yum:
         name: redis
         state: latest
-    - name: Enable ports on the list
-      firewalld:
-        zone: public
-        port: "{{ item.port }}"
-        permanent: true
-        state: "{{ item.state }}"
-      loop:
-        "{{ port_list }}"
-      notify:
-        - Restart firewalld
+
     - name: Update redis.conf
       lineinfile:
         path: /etc/redis/redis.conf
