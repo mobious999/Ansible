@@ -10,7 +10,6 @@
       yum:
         name: redis
         state: latest
-
     - name: Update redis.conf
       lineinfile:
         path: /etc/redis/redis.conf
