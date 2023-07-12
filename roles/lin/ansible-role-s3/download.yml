@@ -1,0 +1,15 @@
+---
+- name: Download object from AWS S3 bucket using Ansible
+  hosts: localhost
+  tasks:
+  - name: GET/DOWNLOAD file from S3 bucket
+    amazon.aws.aws_s3:
+      profile: personal
+      bucket: devopsjunction
+      mode: get
+      object: "2021/12/27/Screenshot 2021-12-27 at 1.10.19 AM.png"
+      dest: "/Users/saravananthangaraj/Downloads/Screenshot 2021-12-27 at 1.10.19 AM.png"
+    register: getresult
+  - debug: 
+      msg="{{ getresult.msg }}" 
+    when: getresult.changed

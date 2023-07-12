@@ -1,0 +1,48 @@
+---
+- name: Download object from AWS S3 bucket using Ansible
+  hosts: localhost
+  vars: 
+    - directories: []
+    - files: []
+    - destlocation: "/Users/saravananthangaraj/Downloads"
+
+  tasks:
+
+  - name: Get the list of files first
+    amazon.aws.aws_s3:
+      profile: personal
+      bucket: devopsjunction
+      mode: list
+      prefix: "2021/12/"
+    register: listresult
+
+  - name: Get the list of Directories
+    set_fact: 
+      directories: '{%if item is not none %}{{ directories }} + [ "{{ item }}" ] {% else %}{{directories}}{% endif %}'
+    with_items: "{{ listresult.s3_keys | map('regex_search', '^.+\/$') }}"
+
+  - name: Get the list of Files
+    set_fact: 
+      files: '{%if item is not none %}{{ files }} + [ "{{ item }}" ] {% else %}{{files}}{% endif %}'
+    with_items: "{{ listresult.s3_keys | map('regex_search', '^.+[^\/]$') }}"
+    
+  - name: Create the directories first
+    shell: |
+      mkdir -p {{item}}
+    args:
+      chdir: "{{destlocation}}"
+    with_items: "{{directories}}"
+  
+  - name: GET/DOWNLOAD file from S3 bucket
+    amazon.aws.aws_s3:
+      profile: personal
+      bucket: devopsjunction
+      mode: get
+      object: "{{item}}"
+      dest: "{{destlocation}}/{{item}}"
+    register: getresult
+    with_items: "{{files}}"
+
+  - debug: 
+      msg="{{ getresult.msg }}" 
+    when: getresult.changed

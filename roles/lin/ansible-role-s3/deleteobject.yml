@@ -1,0 +1,15 @@
+---
+- name: Delete object from AWS S3 bucket using Ansible
+  hosts: localhost
+
+  tasks:
+  
+  - name: Delete Objects from S3 bucket
+    amazon.aws.aws_s3:
+      bucket: devopsjunction
+      profile: personal
+      object: "2021/12/26/Screenshot 2021-12-26 at 2.43.55 PM.png"
+      mode: delobj
+    register: delresult
+
+  - debug: msg="{{ delresult.msg }}"

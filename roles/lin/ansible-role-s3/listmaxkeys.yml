@@ -1,0 +1,12 @@
+- name: AWS S3 Bucket List - Ansible
+  hosts: localhost
+  tasks:
+  - name: List keys/Objects
+    amazon.aws.aws_s3:
+      profile: personal
+      bucket: devopsjunction
+      mode: list
+      prefix: "2021/12"
+      max_keys: 400
+    register: listresult
+  - debug: msg={{listresult.s3_keys}}

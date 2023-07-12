@@ -1,4 +1,3 @@
-# handlers/main.yml
 ---
 - name: restart redis
   service:

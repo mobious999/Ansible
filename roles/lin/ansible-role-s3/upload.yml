@@ -1,0 +1,14 @@
+---
+- name: AWS S3 Bucket Upload - Ansible
+  hosts: localhost
+  tasks:
+  - name: Upload/PUT file to S3 bucket
+    amazon.aws.aws_s3:
+      profile: personal
+      bucket: devopsjunction
+      mode: put
+      object: "2021/12/Screenshot 2021-12-26 at 8.31.33 PM.png"
+      src: "/Users/saravananthangaraj/Desktop/Screenshot 2021-12-26 at 8.31.33 PM.png"
+    register: putresult
+  - debug: msg="{{ putresult.msg }} and the S3 Object URL is {{putresult.url}}"
+    when: putresult.changed

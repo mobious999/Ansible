@@ -1,0 +1,15 @@
+---
+- name: Copy objects from one S3 bucket to another bucket using Ansible
+  hosts: localhost
+  tasks:
+  - name: Copy Objects from one S3 bucket to another
+    amazon.aws.aws_s3:
+      bucket: gritfy.io
+      profile: personal
+      object: sqscli-mac.zip
+      mode: copy
+      copy_src: 
+        bucket: devopsjunction
+        object: sqscli-mac.zip
+    register: copyresult
+  - debug: msg="{{ delresult.msg }}"
