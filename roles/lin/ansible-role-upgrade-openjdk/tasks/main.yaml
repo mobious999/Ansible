@@ -1,0 +1,20 @@
+
+vars:
+  openjdk_version: "15"
+
+  tasks:
+    # ... Existing tasks ...
+
+    # Uninstall OpenJDK on Debian/Ubuntu
+    - name: Uninstall OpenJDK on Debian/Ubuntu
+      package:
+        name: "openjdk-{{ openjdk_version_minus_one }}-jdk"
+        state: absent
+      when: ansible_os_family == 'Debian'
+
+    # Uninstall OpenJDK on Red Hat/CentOS
+    - name: Uninstall OpenJDK on Red Hat/CentOS
+      package:
+        name: "java-{{ openjdk_version_minus_one }}-openjdk-devel"
+        state: absent
+      when: ansible_os_family == 'RedHat'

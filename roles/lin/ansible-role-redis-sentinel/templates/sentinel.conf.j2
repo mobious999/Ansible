@@ -1,0 +1,4 @@
+# sentinel.conf.j2
+port 26379
+dir /tmp
+sentinel monitor mymaster <MASTER_NODE_IP> 6379 2

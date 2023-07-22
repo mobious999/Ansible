@@ -1,0 +1,53 @@
+---
+- name: Install OpenJDK and Configure JAVA_HOME
+  hosts: your_target_servers
+  become: yes
+
+  vars:
+    openjdk_version: "11.0.12"  # Change this to your desired OpenJDK version
+    openjdk_package: "java-{{ openjdk_version }}-openjdk-devel"
+    java_home_path: "/usr/lib/jvm/java-{{ openjdk_version }}"
+
+  tasks:
+    - name: Update package cache (for Debian/Ubuntu)
+      package:
+        name: apt
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install OpenJDK on Debian/Ubuntu
+      package:
+        name: "{{ openjdk_package }}"
+      when: ansible_os_family == 'Debian'
+
+    - name: Install OpenJDK on Red Hat/CentOS
+      package:
+        name: "{{ openjdk_package }}"
+      when: ansible_os_family == 'RedHat'
+
+    - name: Set JAVA_HOME environment variable
+      ansible.builtin.lineinfile:
+        dest: /etc/profile.d/java_home.sh
+        line: 'export JAVA_HOME="{{ java_home_path }}"'
+        state: present
+        create: yes
+        owner: root
+        group: root
+        mode: 0644
+      when: ansible_os_family == 'Debian' or ansible_os_family == 'RedHat'
+
+    - name: Create yum versionlock file
+      ansible.builtin.file:
+        path: /etc/yum/pluginconf.d/versionlock.list
+        state: touch
+        mode: 0644
+      when: ansible_os_family == 'RedHat'
+
+    - name: Add OpenJDK package to versionlock file
+      ansible.builtin.lineinfile:
+        path: /etc/yum/pluginconf.d/versionlock.list
+        line: "{{ openjdk_package }}"
+        state: present
+        create: yes
+        mode: 0644
+      when: ansible_os_family == 'RedHat'

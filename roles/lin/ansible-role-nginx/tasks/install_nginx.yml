@@ -1,0 +1,54 @@
+---
+- name: Install and configure Nginx with SSL
+  hosts: your_target_servers
+  become: yes
+
+  vars:
+    nginx_ssl_certificate: /path/to/ssl_certificate.crt   # Replace with the path to your SSL certificate
+    nginx_ssl_certificate_key: /path/to/ssl_certificate.key   # Replace with the path to your SSL certificate key
+
+  tasks:
+    - name: Install Nginx on Debian/Ubuntu
+      apt:
+        name: nginx
+        state: latest
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Nginx on Red Hat/CentOS
+      yum:
+        name: nginx
+        state: latest
+      when: ansible_os_family == 'RedHat'
+
+    - name: Copy SSL certificate to the server
+      copy:
+        src: "{{ item }}"
+        dest: /etc/nginx/
+        mode: 0644
+      with_items:
+        - "{{ nginx_ssl_certificate }}"
+        - "{{ nginx_ssl_certificate_key }}"
+
+    - name: Configure Nginx
+      template:
+        src: nginx_config.j2
+        dest: /etc/nginx/sites-available/default
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - Reload Nginx
+
+    - name: Enable Nginx default site
+      file:
+        src: /etc/nginx/sites-available/default
+        dest: /etc/nginx/sites-enabled/default
+        state: link
+      notify:
+        - Reload Nginx
+
+  handlers:
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: reloaded

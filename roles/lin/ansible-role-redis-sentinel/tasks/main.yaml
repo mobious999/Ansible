@@ -1,0 +1,62 @@
+---
+- name: Install Redis cluster with Sentinel
+  hosts: redis_nodes
+  become: yes
+
+  vars:
+    redis_version: "6.2.5"   # Change this to your desired Redis version
+    sentinel_port: 26379
+
+  tasks:
+    - name: Install Redis server
+      package:
+        name: redis
+        state: latest
+
+    - name: Configure Redis
+      template:
+        src: redis.conf.j2
+        dest: /etc/redis/redis.conf
+        owner: redis
+        group: redis
+        mode: 0644
+      notify:
+        - Restart Redis
+
+    - name: Start and enable Redis service
+      service:
+        name: redis
+        state: started
+        enabled: yes
+
+    - name: Install Redis sentinel
+      package:
+        name: redis-sentinel
+        state: latest
+
+    - name: Configure Redis Sentinel
+      template:
+        src: sentinel.conf.j2
+        dest: /etc/redis/sentinel.conf
+        owner: redis
+        group: redis
+        mode: 0644
+      notify:
+        - Restart Sentinel
+
+    - name: Start and enable Sentinel service
+      service:
+        name: redis-sentinel
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Restart Redis
+      service:
+        name: redis
+        state: restarted
+
+    - name: Restart Sentinel
+      service:
+        name: redis-sentinel
+        state: restarted

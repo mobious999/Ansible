@@ -1,0 +1,1 @@
+ansible-playbook -i hosts.ini install_nginx.yml

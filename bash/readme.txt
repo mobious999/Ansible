@@ -1,0 +1,1 @@
+chmod +x jenkins_backup.sh jenkins_restore.sh jenkins_service.sh jenkins_setup.sh
