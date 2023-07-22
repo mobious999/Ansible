@@ -1,0 +1,16 @@
+[Unit]
+Description=Apache Solr
+After=network.target
+
+[Service]
+Type=simple
+User={{ solr_user }}
+Group={{ solr_group }}
+WorkingDirectory={{ solr_install_dir }}
+ExecStart={{ solr_install_dir }}/bin/solr start -cloud -p 8983 -s {{ solr_data_dir }} -h localhost
+ExecStop={{ solr_install_dir }}/bin/solr stop -all
+Restart=on-failure
+LimitNOFILE=65536
+LimitNPROC=4096
+Environment=JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64  # Change this to your Java path
+Environment=SOLR_INCLUDE={{ solr_install_dir }}/bin/solr.in

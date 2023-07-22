@@ -1,0 +1,30 @@
+---
+- name: Create Solr Service File and Enable Service
+  hosts: your_target_servers
+  become: yes
+
+  vars:
+    solr_user: "solr"
+    solr_group: "solr"
+    solr_install_dir: "/opt/solr"
+    solr_data_dir: "/var/solr/data"
+    solr_java_opts: "-Xms512m -Xmx1024m"   # Java options for Solr
+
+  tasks:
+    - name: Create Solr service file
+      template:
+        src: solr.service.j2
+        dest: "/etc/systemd/system/solr.service"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    - name: Reload systemd manager configuration
+      systemd:
+        daemon_reload: yes
+
+    - name: Start Solr service and enable it on boot
+      service:
+        name: solr
+        state: started
+        enabled: yes

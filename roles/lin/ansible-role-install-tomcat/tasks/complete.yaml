@@ -1,0 +1,83 @@
+---
+- name: Install Tomcat with Symbolic Links and SSL Configuration
+  hosts: your_target_servers
+  become: yes
+
+  vars:
+    tomcat_version: "9.0.52"  # Change this to the desired Tomcat version
+    tomcat_install_dir: "/opt/tomcat"
+    tomcat_home_link: "/opt/tomcat-latest"  # Change this to the desired symlink location
+    keystore_file: "/opt/keystore/p12/dev.p12"
+    keystore_password: "password123"
+
+  tasks:
+    - name: Install required packages
+      apt:
+        name: default-jdk
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install required packages
+      yum:
+        name: java-1.8.0-openjdk-devel
+        state: present
+      when: ansible_os_family == 'RedHat'
+
+    - name: Create Tomcat user
+      user:
+        name: tomcat
+        home: "{{ tomcat_install_dir }}"
+        shell: "/bin/nologin"
+        system: yes
+        state: present
+
+    - name: Download Tomcat
+      get_url:
+        url: "https://downloads.apache.org/tomcat/tomcat-{{ tomcat_version.major }}/{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz"
+        dest: "/tmp/apache-tomcat.tar.gz"
+
+    - name: Extract Tomcat
+      unarchive:
+        src: "/tmp/apache-tomcat.tar.gz"
+        dest: "{{ tomcat_install_dir }}"
+        remote_src: yes
+        owner: tomcat
+        group: tomcat
+        creates: "{{ tomcat_install_dir }}/apache-tomcat-{{ tomcat_version }}"
+
+    - name: Create symbolic link to Tomcat installation
+      file:
+        src: "{{ tomcat_install_dir }}/apache-tomcat-{{ tomcat_version }}"
+        dest: "{{ tomcat_home_link }}"
+        state: link
+        owner: tomcat
+        group: tomcat
+
+    - name: Configure Tomcat server.xml for SSL
+      lineinfile:
+        path: "{{ tomcat_install_dir }}/apache-tomcat-{{ tomcat_version }}/conf/server.xml"
+        regexp: '<!-- A "Connector" using the shared thread pool-->'
+        insertafter: "<!-- A \"Connector\" using the shared thread pool-->"
+        line: |
+          <Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+                     maxThreads="150" SSLEnabled="true" scheme="https" secure="true"
+                     keystoreFile="{{ keystore_file }}" keystorePass="{{ keystore_password }}"
+                     keystoreType="PKCS12" clientAuth="false" sslProtocol="TLS" />
+
+    - name: Create Tomcat service file
+      template:
+        src: tomcat.service.j2
+        dest: "/etc/systemd/system/tomcat.service"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    - name: Reload systemd manager configuration
+      systemd:
+        daemon_reload: yes
+
+    - name: Start Tomcat service and enable it on boot
+      service:
+        name: tomcat
+        state: started
+        enabled: yes

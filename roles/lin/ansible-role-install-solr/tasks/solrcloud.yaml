@@ -1,0 +1,44 @@
+---
+- name: Install Apache Solr Cloud
+  hosts: solr_servers
+  become: yes
+
+  vars:
+    solr_version: "8.11.1"   # Change this to the desired Solr version
+    solr_cloud_port: "8983"  # Change this to the desired SolrCloud port
+    solr_install_dir: "/opt/solr"
+    solr_data_dir: "/var/solr/data"  # Change this to the desired data directory path
+    solr_zookeeper_hosts: "zk_server1:2181,zk_server2:2181"  # Change this to the ZooKeeper ensemble hosts and port
+
+  tasks:
+    - name: Download Apache Solr
+      get_url:
+        url: "https://downloads.apache.org/lucene/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz"
+        dest: "/tmp/solr.tgz"
+
+    - name: Extract Solr
+      unarchive:
+        src: "/tmp/solr.tgz"
+        dest: "{{ solr_install_dir }}"
+        remote_src: yes
+
+    - name: Set Solr permissions
+      file:
+        path: "{{ solr_install_dir }}"
+        state: directory
+        recurse: yes
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
+
+    - name: Create SolrCloud configuration directory
+      file:
+        path: "{{ solr_data_dir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
+
+    - name: Create SolrCloud collection
+      command: "{{ solr_install_dir }}/bin/solr create -c my_collection -d {{ solr_install_dir }}/server/solr/configsets/_default -shards 2 -replicationFactor 2 -p {{ solr_cloud_port }} -s {{ solr_data_dir }}"
+      become_user: "{{ ansible_user }}"

@@ -1,0 +1,32 @@
+---
+- name: Parse IP Address from ifconfig
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+    - name: Get IP address from ifconfig
+      command: ifconfig  # You can use 'ip addr show' if 'ifconfig' is not available
+      register: ifconfig_output
+
+    - name: Parse IP address and extract third octet
+      set_fact:
+        ip_address: "{{ ifconfig_output.stdout | regex_search('(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})', '\\1') }}"
+        third_octet: "{{ ip_address.split('.')[2] }}"
+
+    - name: Parse first two digits of third octet into another variable
+      set_fact:
+        first_two_digits: "{{ third_octet | regex_search('(\\d{2})', '\\1') }}"
+      when: third_octet is defined and third_octet | length >= 2
+
+    - name: Set Ansible variable based on parsed values
+      set_fact:
+        custom_variable: "{{ first_two_digits | int > 50 }}"
+      when:
+        - third_octet is defined
+        - third_octet | length >= 2
+        - first_two_digits is defined
+
+    - name: Perform conditionals based on the Ansible variable
+      debug:
+        msg: "Custom Variable is set to {{ custom_variable }}"
+      when: custom_variable is defined and custom_variable

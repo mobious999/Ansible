@@ -1,0 +1,18 @@
+---
+- name: Parse IP Address from ifconfig
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+    - name: Get IP address from ifconfig
+      command: ifconfig  # You can use 'ip addr show' if 'ifconfig' is not available
+      register: ifconfig_output
+
+    - name: Parse IP address and extract third octet
+      set_fact:
+        ip_address: "{{ ifconfig_output.stdout | regex_search('(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})', '\\1') }}"
+        third_octet: "{{ ip_address.split('.')[2] }}"
+
+    - name: Display the IP address and third octet
+      debug:
+        msg: "The IP address is {{ ip_address }} and the third octet is {{ third_octet }}"
