@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars:
+    local_file_path: "/path/to/local/file"  # Replace with the path to your local file
+    s3_bucket_name: "your-bucket-name"  # Replace with your S3 bucket name
+    s3_prefix: "tmp/"  # You can change this prefix to organize files within the bucket
+
+  tasks:
+    - name: Copy file to S3 bucket
+      s3:
+        bucket: "{{ s3_bucket_name }}"
+        object: "{{ s3_prefix }}{{ local_file_path | basename }}"
+        src: "{{ local_file_path }}"
+        mode: put
