@@ -2,7 +2,4 @@
 - hosts: all
   become: True
   roles:
-    - ant
-    - environment
     - ansible-role-environment
-#
