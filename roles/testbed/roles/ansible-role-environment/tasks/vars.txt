@@ -12,4 +12,3 @@ export SOLR_SERVER_3="lhs-uat-eis-bat-01.uat.wfl.cloud"
 export SOLR_CONF="/opt/solr/latest/server/conf"
 export ZK_CONF="/opt/zookeeper/latest/conf"
 export CATALINA_HOME="/opt/tomcat/latest"
-
