@@ -1,0 +1,4 @@
+{% for sudoer in sudoers %}
+{{ sudoer.user }}	{% if sudoer.host is defined %}{{ sudoer.host }}{% else %}ALL{% endif %}={% if sudoer.user_commands is defined %}{% for user_command in sudoer.user_commands %}{% if user_command.runas_users is defined %}({{ user_command.runas_users|join(', ') }}){% else %}(ALL){% endif %}{% if user_command.nopasswd %}	NOPASSWD: {% else %}	PASSWD: {% endif %}{{ user_command.commands|join(', ') }}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}(ALL)	PASSWD: ALL{% endif %}
+
+{% endfor %}

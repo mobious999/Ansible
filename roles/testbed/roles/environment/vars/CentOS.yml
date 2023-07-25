@@ -1,0 +1,18 @@
+packages:
+  - release: "8"
+    name:
+     - sudo
+     - wget
+     - python2
+  - release: "7"
+    name:
+     - sudo
+     - wget
+     - httpd-tools
+  - release: "6"
+    name:
+     - sudo
+
+limit_check_files:
+  - system-auth
+  - runuser

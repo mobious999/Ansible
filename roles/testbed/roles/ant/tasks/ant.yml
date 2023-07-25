@@ -1,0 +1,18 @@
+---
+- name: Download Ant
+  command: "wget -q -O {{ant_archive}} --no-check-certificate --no-cookies {{ant_download_url}} creates={{ant_name}}"
+
+- name: Unpack archive
+  command: tar -zxf {{ant_archive}} -C {{download_folder}} creates={{ant_name}}
+
+- name: Fix ownership
+  file: state=directory path={{ant_name}} owner=root group=root recurse=yes
+
+- name: Make Ant available for system
+  command: 'alternatives --install "/usr/bin/ant" "ant" "{{ant_name}}/bin/ant" 2000'
+
+- name: Set as default Ant
+  command: 'update-alternatives --set ant {{ant_name}}/bin/ant'
+
+- name: Clean up
+  file: state=absent path={{ant_archive}}

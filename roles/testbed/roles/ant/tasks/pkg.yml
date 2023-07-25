@@ -1,0 +1,9 @@
+---
+- name: Install package | yum
+  yum:
+    state: present
+    pkg: "{{ item }}"
+  with_items: ["{{ packages }}"]
+  tags:
+  - installation
+

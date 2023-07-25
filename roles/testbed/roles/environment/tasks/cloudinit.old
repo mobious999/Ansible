@@ -1,0 +1,10 @@
+---
+- name: Modify cloudinit configuration
+  template:
+    src: "{{ item.template | d(cloudinit_template | ternary(cloudinit_template, 'cloudinit-config.j2')) }}"
+    dest: "{{ cloudinit_directory }}/{{ item.file }}"
+  with_items:
+    - "{{ cloudinit }}"
+  tags:
+    - configuration
+    - cloudinit

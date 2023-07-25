@@ -1,0 +1,16 @@
+---
+# Default variables
+# =================
+
+ant: apache-ant-1.8.4
+
+#jdk_version: jdk1.6.0_27
+#jdk_version: jdk1.6.0_45
+#jdk_version: jdk1.7.0_79
+#jdk_version: jdk1.8.0_101
+#jdk_version: jdk1.8.0_211
+
+ant_download_url: http://archive.apache.org/dist/ant/binaries/{{ant}}-bin.tar.gz
+download_folder: /opt
+ant_name: "{{download_folder}}/{{ant}}"
+ant_archive: "{{download_folder}}/{{ant}}-bin.tar.gz"

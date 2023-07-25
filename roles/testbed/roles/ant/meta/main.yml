@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: Alexandr Oransky
+  description: Install and manage apache maven
+  company: EIS Group
+  issue_tracker_url:
+  license: GPLv2
+  min_ansible_version: 1.7
+  platforms:
+    - name: EL
+      versions:
+        - 7
+  categories:
+    - system
+dependencies:

@@ -1,0 +1,48 @@
+---
+- name: Install AppDynamics Machine Agent
+  hosts: your_target_servers
+  become: yes
+
+  vars:
+    appd_machine_agent_version: "20.12.0"  # Change this to the desired Machine Agent version
+    appd_controller_host: "your_controller_host"
+    appd_controller_port: "your_controller_port"
+    appd_account_name: "your_account_name"
+    appd_account_access_key: "your_access_key"
+    appd_machine_agent_install_dir: "/opt/appdynamics/machine_agent"
+
+  tasks:
+    - name: Create AppDynamics Machine Agent directory
+      file:
+        path: "{{ appd_machine_agent_install_dir }}"
+        state: directory
+        owner: "your_user"
+        group: "your_group"
+        mode: "0755"
+
+    - name: Download AppDynamics Machine Agent
+      get_url:
+        url: "https://download.appdynamics.com/onpremises/public/latest/machine-agent/{{ appd_machine_agent_version }}/machineagent-bundle-{{ appd_machine_agent_version }}.zip"
+        dest: "/tmp/machine-agent.zip"
+
+    - name: Extract AppDynamics Machine Agent
+      unarchive:
+        src: "/tmp/machine-agent.zip"
+        dest: "{{ appd_machine_agent_install_dir }}"
+        remote_src: yes
+        creates: "{{ appd_machine_agent_install_dir }}/machineagent"
+
+    - name: Configure AppDynamics Machine Agent
+      template:
+        src: machine-agent.yaml.j2
+        dest: "{{ appd_machine_agent_install_dir }}/machineagent/conf/machine-agent.yaml"
+        owner: "your_user"
+        group: "your_group"
+        mode: "0644"
+
+    - name: Start AppDynamics Machine Agent
+      shell: "{{ appd_machine_agent_install_dir }}/machineagent/bin/machine-agent"
+      async: 300
+      poll: 0
+      become_user: "your_user"
+      ignore_errors: yes

@@ -1,0 +1,12 @@
+packages:
+  - release: "7"
+    name:
+     - sudo
+     - wget
+  - release: "6"
+    name:
+     - sudo
+
+limit_check_files:
+  - system-auth
+  - runuser

@@ -1,0 +1,19 @@
+---
+- name: Modify SSH configuration
+  lineinfile:
+    dest: "{{ item.0.path }}"
+    regexp: '{{ item.1 | regex_replace(" .*$", "") }}'
+    line: '{{ item.1 | regex_replace("\^", "") }}'
+    state: "present"
+    validate: "/usr/sbin/sshd -t -f %s"
+  with_subelements:
+    - "{{ sshd }}"
+    - "configuration"
+  tags:
+    - configuration
+    - sshd
+
+- name: trigger sshd-restart
+  command: /bin/true
+  notify:
+    - "reload sshd"

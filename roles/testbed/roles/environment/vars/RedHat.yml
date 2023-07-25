@@ -1,0 +1,16 @@
+packages:
+  - release: "7"
+    name:
+      - sudo
+      - wget
+      - tar
+      - unzip
+      - hg
+      - firewalld
+  - release: "6"
+    name:
+      - sudo
+
+limit_check_files:
+  - system-auth
+  - runuser
