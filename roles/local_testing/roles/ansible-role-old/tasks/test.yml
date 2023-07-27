@@ -1,0 +1,14 @@
+---
+- name: Create Environment File in /etc/profile.d
+  become: true
+  vars:
+    env_file_dest: /etc/profile.d/jenkins_environment.sh
+  tasks:
+    - name: Create the environment file from template
+      template:
+        src: custom_env.sh.j2
+        dest: "{{ env_file_dest }}"
+      backup: yes
+      mode: "0644"
+      owner: root
+      group: root
