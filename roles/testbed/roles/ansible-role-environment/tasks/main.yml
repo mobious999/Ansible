@@ -4,14 +4,14 @@
   become: yes
 
   vars:
-    env_file_dest: "/etc/profile.d/jenkins_environment.sh"  # Change this to the desired location of the environment file
+    env_file_dest: "/etc/profile.d/env.sh"  # Change this to the desired location of the environment file
 
   tasks:
     - name: Create the environment file from template
       template:
-        src: custom_env.sh.j2
+        src: env.sh.j2
         dest: "{{ env_file_dest }}"
-      backup: yes
+      backup: true
       mode: "0644"
       owner: "root"
       group: "root"
