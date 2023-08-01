@@ -1,4 +1,0 @@
-[redis]
-master ansible_host=10.0.2.5 role=master
-node01 ansible_host=10.0.2.6 role=replica
-node02 ansible_host=10.0.2.7 role=replica

@@ -1,8 +1,6 @@
 ---
-- hosts: all
+- hosts: local
+  connection: local
   become: True
   roles:
-    - ant
-    - environment
     - ansible-role-environment
-#
