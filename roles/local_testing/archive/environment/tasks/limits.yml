@@ -1,0 +1,24 @@
+---
+- name: Manage template with system limits
+  template:
+    src: "limit.conf.j2"
+    dest: "/etc/security/limits.d/{{ limit_filename }}"
+    owner: "{{ limit_user }}"
+    group: "{{ limit_group }}"
+    mode: "{{ limit_chmod }}"
+    backup: "{{ limit_backup }}"
+  tags:
+    - configuration
+    - limit
+
+- name: Manage PAM entries
+  lineinfile:
+    dest: "/etc/pam.d/{{ item }}"
+    regexp: 'session[\s]+required[\s]+pam_limits.so'
+    line: "session required pam_limits.so"
+    state: "{{ limit_check_state }}"
+  with_items: ["{{ limit_check_files }}"]
+  when: "limit_check"
+  tags:
+    - configuration
+    - limit

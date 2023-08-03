@@ -1,0 +1,14 @@
+---
+- name: Install package | yum
+  yum:
+    state: latest
+    pkg: "{{ item.1 }}"
+  with_subelements: 
+    - "{{ packages }}"
+    - name
+  when: "(ansible_distribution == 'CentOS' and item.0.release == ansible_distribution_major_version) or (ansible_distribution == 'RedHat' and item.0.release == ansible_distribution_major_version)"
+  tags:
+  - nfs
+  - package
+  - installation
+  - always

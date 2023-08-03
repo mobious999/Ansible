@@ -1,0 +1,9 @@
+---
+- name: yum clean expire-cache
+  shell: yum clean expire-cache 
+
+- name: yum enable dnf-automatic
+  shell: systemctl enable dnf-automatic-notifyonly.timer && systemctl start dnf-automatic-notifyonly.timer
+  when: yum_update == "true"
+
+  # excludes shoud be added here

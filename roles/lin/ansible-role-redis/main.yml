@@ -2,7 +2,7 @@
 - hosts: all
   remote_user: root
   vars_files:
-    - "vars/common.yml"
+    - "vars/main.yml"
 
   tasks:
   - name: Performing Tasks for CentOS

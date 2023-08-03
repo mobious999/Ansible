@@ -1,0 +1,13 @@
+---
+- name: Manage services
+  service:
+    name: '{{ item.1 }}'
+    state: 'stopped'
+    enabled: 'no'
+  when: '"{{ item.0.release }}" == "{{ ansible_distribution_major_version }}"'
+  with_subelements:
+    - '{{ services }}'
+    - name
+  tags:
+    - configuration
+    - service

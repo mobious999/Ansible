@@ -1,0 +1,36 @@
+- name: Create a file in /etc/profile.d for jenkins
+  become: true
+  hosts: all
+  gather_facts: true
+  vars:
+    antversion: "1.10.9"
+    ant_install_prefix: /usr/share
+  tasks:
+    #- name: Create file in /etc/profile.d
+    #  file:
+    #    path: "/etc/profile.d/java_environment.sh"
+    #    state: touch
+    #    mode: "0644"
+
+    - name: Insert/Update block in /etc/profile.d/java_environment.sh
+      blockinfile:
+        path: /etc/profile.d/java_environement.sh
+        block: |
+          export SERVER_APP_URL="https://wflapp1314.uat.wfl.cloud/wfl-app/login.xhtml"
+          export SERVER_BAT_URL="https://wflapp1718.uat.wfl.cloud/wfl-app/login.xhtm"
+          export SERVER_RATING_URL="http://wflapp1516.uat.wfl.cloud/wfl-rating/"
+          export ZK_SERVER_1="lhs-uat-eis-app-01.uat.wfl.cloud"
+          export ZK_SERVER_2="lhs-uat-eis-app-02.uat.wfl.cloud"
+          export ZK_SERVER_3="lhs-uat-eis-bat-01.uat.wfl.cloud"
+          export SOLR_SERVER_1="lhs-uat-eis-app-01.uat.wfl.cloud"
+          export SOLR_SERVER_2="lhs-uat-eis-app-02.uat.wfl.cloud"
+          export SOLR_SERVER_3="lhs-uat-eis-bat-01.uat.wfl.cloud"
+          export SOLR_CONF="/opt/solr/latest/server/conf"
+          export ZK_CONF="/opt/zookeeper/latest/conf"
+          export CATALINA_HOME="/opt/tomcat/latest"
+          #ANT_HOME="{{ ant_install_prefix }}/apache-ant-{{ antversion }}"
+          #PATH="$PATH:{{ ant_install_prefix }}/apache-ant-{{ antversion }}/bin"
+          #export ANT_HOME
+          #export PATH
+        state: present
+        create: true

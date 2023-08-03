@@ -1,0 +1,15 @@
+- name: Check Ansible version
+  fail:
+    msg: 'This playbook requires Ansible 1.6.0 or greater.'
+  when: ansible_version.full < "1.6.0"
+  tags:
+    - check
+    - always
+
+- name: Check OS
+  fail:
+    msg: 'The operating system of the target machine "{{ inventory_hostname }}" is not currently supported.'
+  when: ansible_os_family not in ['RedHat']
+  tags:
+    - check
+    - always

@@ -1,0 +1,6 @@
+packages:
+ - sudo
+
+limit_check_files:
+  - system-auth
+  - runuser

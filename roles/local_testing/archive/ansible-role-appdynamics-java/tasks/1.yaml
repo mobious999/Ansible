@@ -1,0 +1,51 @@
+---
+- name: Install AppDynamics Java Agent and Modify setenv.sh
+  hosts: your_target_servers
+  become: yes
+
+  vars:
+    appd_java_agent_version: "21.7.0"  # Change this to the desired Java Agent version
+    appd_java_agent_path: "/path/to/AppServerAgent.zip"  # Change this to the correct path of the Java Agent package
+    appd_controller_host: "your_controller_host"
+    appd_controller_port: "your_controller_port"
+    appd_account_name: "your_account_name"
+    appd_account_access_key: "your_access_key"
+    appd_app_name: "your_app_name"
+    appd_tier_name: "your_tier_name"
+    appd_node_name: "your_node_name"
+
+  tasks:
+    - name: Unzip AppDynamics Java Agent package
+      unarchive:
+        src: "{{ appd_java_agent_path }}"
+        dest: "/opt/appdynamics"
+        remote_src: yes
+        creates: "/opt/appdynamics/AppServerAgent"
+
+    - name: Configure AppDynamics Java Agent
+      template:
+        src: appdynamics-agent-config.xml.j2
+        dest: "/opt/appdynamics/AppServerAgent/conf/controller-info.xml"
+        owner: "your_user"
+        group: "your_group"
+        mode: "0644"
+
+    - name: Modify setenv.sh to add Java Agent options
+      blockinfile:
+        path: "/path/to/your/tomcat/bin/setenv.sh"  # Change this to the correct path of your setenv.sh file
+        block: |
+          JAVA_OPTS="$JAVA_OPTS -javaagent:/opt/appdynamics/AppServerAgent/javaagent.jar"
+          JAVA_OPTS="$JAVA_OPTS -Dappdynamics.controller.hostName={{ appd_controller_host }}"
+          JAVA_OPTS="$JAVA_OPTS -Dappdynamics.controller.port={{ appd_controller_port }}"
+          JAVA_OPTS="$JAVA_OPTS -Dappdynamics.agent.applicationName={{ appd_app_name }}"
+          JAVA_OPTS="$JAVA_OPTS -Dappdynamics.agent.tierName={{ appd_tier_name }}"
+          JAVA_OPTS="$JAVA_OPTS -Dappdynamics.agent.nodeName={{ appd_node_name }}"
+          JAVA_OPTS="$JAVA_OPTS -Dappdynamics.agent.accountName={{ appd_account_name }}"
+          JAVA_OPTS="$JAVA_OPTS -Dappdynamics.agent.accountAccessKey={{ appd_account_access_key }}"
+        marker: "# {mark} AppDynamics Java Agent options"
+        state: present
+
+    - name: Restart Tomcat (you can adapt this task for other application servers)
+      service:
+        name: tomcat
+        state: restarted

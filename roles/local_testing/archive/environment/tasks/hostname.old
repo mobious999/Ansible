@@ -1,0 +1,31 @@
+---
+- name: Modify hosts configuration | IPv4
+  lineinfile:
+    dest: "/etc/hosts"
+    regexp: "^127.0.0.1"
+    line: "127.0.0.1	{{ inventory_hostname }} {{ inventory_hostname_short }} localhost localhost.localdomain localhost4 localhost4.localdomain4"
+    state: "present"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+
+- name: Modify hosts configuration | IPv6
+  lineinfile:
+    dest: "/etc/hosts"
+    regexp: "^::1"
+    line: "::1		{{ inventory_hostname }} {{ inventory_hostname_short }} localhost localhost.localdomain localhost6 localhost6.localdomain6"
+    state: "present"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+
+- name: Modify hostname current value
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Add search domain
+  lineinfile:
+    dest: /etc/resolv.conf
+    regexp: '^search'
+    line: "search {{ dns_zone }}"
+  when: dns_zone is defined

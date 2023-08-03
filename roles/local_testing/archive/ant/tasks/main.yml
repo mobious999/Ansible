@@ -1,0 +1,20 @@
+---
+- name: Include prerequirements
+  include: prereq.yml
+
+- name: Include OS variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}.yml"
+    - "default.yml"
+
+# package s are installed under environment
+
+# - name: Install packages
+#   include: pkg.yml
+
+- name: Include Env tasks
+  include: env.yml
+
+- name: Include Ant tasks
+  include: ant.yml

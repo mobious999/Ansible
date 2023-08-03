@@ -1,0 +1,35 @@
+---
+- name: Include prerequirements
+  include: prereq.yml
+
+- name: Include OS variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}.yml"
+    - "default.yml"
+
+- name: Include users management
+  include: users.yml
+
+- name: Include limit management
+  include: limits.yml
+  when: environment_limit == "true"
+
+- name: Include sshd management
+  include: sshd.yml
+  when: environment_sshd == "true"
+
+- name: Include selinux management
+  include: selinux.yml
+  when: selinux is defined
+
+- name: Include service management
+  include: services.yml
+  when: environment_service
+
+- name: Include swap management
+  include: swap.yml
+  when: environment_swap == "true"
+
+- name: Report
+  include: report.yml

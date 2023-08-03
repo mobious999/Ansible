@@ -1,0 +1,7 @@
+- name: Print swap result
+  debug:
+    msg: '{{ item.size | d(swap_size) }} MB added to swap. Now host has a "{{ ansible_memtotal_mb }}" RAM and "{{ ansible_swaptotal_mb | int + 2048 }}" swap size.'
+  with_items: '{{ swap }}'
+  when: environment_swap and swap_file.changed
+  tags:
+    - always
