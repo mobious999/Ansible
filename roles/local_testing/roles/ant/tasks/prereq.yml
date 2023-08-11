@@ -1,4 +1,0 @@
-- name: Check OS
-  fail:
-    msg: 'The operating system of the target machine "{{ inventory_hostname }}" is not currently supported.'
-  when: ansible_os_family not in ['RedHat']
