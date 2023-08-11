@@ -2,48 +2,34 @@
 - name: Install Apache Ant
   become: true
   become_user: root
-  vars:
-    antdir: "/opt/ant/versions"
   block:
-    - name: Creating a directory for apache ant
-      ansible.builtin.file:
-        path: "{{ antdir }}"
-        state: directory
-  
     - name: Copy Apache Ant archive to remote host
       copy:
-        src: apache-ant-1.10.13-bin.tar.gz   # Replace X.X.X with the desired version
+        src: apache-ant-X.X.X-bin.tar.gz   # Replace X.X.X with the desired version
         dest: /tmp/apache-ant.tar.gz
         mode: '0644'
 
     - name: Extract Apache Ant
       unarchive:
         src: /tmp/apache-ant.tar.gz
-        dest: /opt/ant/versions
-        creates: /opt/ant/versions/apache-ant-1.10.13-bin   # Replace X.X.X with the desired version
+        dest: /opt/
+        creates: /opt/apache-ant-X.X.X   # Replace X.X.X with the desired version
         mode: '0755'
 
     - name: Create symbolic link for Apache Ant
       file:
-        src: /opt/ant/versions/apache-ant-1.10.13   # Replace X.X.X with the desired version
-        dest: /opt/ant/latest
+        src: /opt/apache-ant-X.X.X   # Replace X.X.X with the desired version
+        dest: /opt/ant
         state: link
         force: yes
-  when: ansible_os_family == 'RedHat'
-
-- name: Creating the file to add ant to the path
-  file:
-    path: "/etc/profile.d/ant.sh"
-    state: touch
-    mode: 0644
-    owner: root
+  when: ansible_os_family == 'Debian'
 
 - name: Set environment variables for Apache Ant (for Debian-based systems)
   become: true
   become_user: root
   lineinfile:
     dest: /etc/environment
-    line: 'ANT_HOME="/opt/ant/latest"'
+    line: 'ANT_HOME="/opt/ant"'
     state: present
   when: ansible_os_family == 'Debian'
 
@@ -52,7 +38,7 @@
   become_user: root
   lineinfile:
     dest: /etc/profile.d/ant.sh
-    line: 'export ANT_HOME="/opt/ant/latest"'
+    line: 'export ANT_HOME="/opt/ant"'
     state: present
   when: ansible_os_family == 'RedHat'
 
