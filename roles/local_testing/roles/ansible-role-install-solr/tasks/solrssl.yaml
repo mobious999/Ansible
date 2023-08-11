@@ -1,0 +1,71 @@
+---
+- name: Configure Solr with SSL
+  hosts: your_target_servers
+  become: yes
+
+  vars:
+    solr_user: "solr"
+    solr_group: "solr"
+    solr_install_dir: "/opt/solr"
+    solr_config_dir: "{{ solr_install_dir }}/server/solr/configsets/_default/conf"
+    solr_ssl_dir: "{{ solr_install_dir }}/server/solr/ssl"
+    solr_ssl_keystore_password: "your_keystore_password"  # Change this to your desired keystore password
+    solr_ssl_keystore_path: "{{ solr_ssl_dir }}/keystore.jks"
+    solr_ssl_keystore_cert_path: "{{ solr_ssl_dir }}/cert.pem"
+    solr_ssl_keystore_key_path: "{{ solr_ssl_dir }}/key.pem"
+
+  tasks:
+    - name: Create Solr SSL directory
+      file:
+        path: "{{ solr_ssl_dir }}"
+        state: directory
+        owner: "{{ solr_user }}"
+        group: "{{ solr_group }}"
+        mode: "0755"
+
+    - name: Generate SSL certificates
+      openssl_certificate:
+        path: "{{ item.path }}"
+        privatekey_path: "{{ item.key }}"
+        privatekey_type: RSA
+        privatekey_passphrase: "{{ solr_ssl_keystore_password }}"
+        csr_path: "{{ item.csr }}"
+        csr_subject: "/C=US/ST=California/L=San Francisco/O=Example/CN=localhost"
+        provider: selfsigned
+      with_items:
+        - { path: "{{ solr_ssl_keystore_cert_path }}", key: "{{ solr_ssl_keystore_key_path }}", csr: "/tmp/solr.csr" }
+
+    - name: Convert SSL certificate and key to PKCS12 format
+      openssl_pkcs12:
+        path: "{{ solr_ssl_keystore_path }}"
+        passphrase: "{{ solr_ssl_keystore_password }}"
+        state: present
+        cert_file: "{{ solr_ssl_keystore_cert_path }}"
+        key_file: "{{ solr_ssl_keystore_key_path }}"
+
+    - name: Copy SSL certificate to Solr configuration directory
+      copy:
+        src: "{{ solr_ssl_keystore_cert_path }}"
+        dest: "{{ solr_config_dir }}/cert.pem"
+        owner: "{{ solr_user }}"
+        group: "{{ solr_group }}"
+        mode: "0644"
+
+    - name: Copy SSL key to Solr configuration directory
+      copy:
+        src: "{{ solr_ssl_keystore_key_path }}"
+        dest: "{{ solr_config_dir }}/key.pem"
+        owner: "{{ solr_user }}"
+        group: "{{ solr_group }}"
+        mode: "0644"
+
+    - name: Configure Solr to use SSL in solr.in.sh
+      lineinfile:
+        path: "{{ solr_install_dir }}/bin/solr.in.sh"
+        line: |
+          SOLR_SSL_KEY_STORE={{ solr_ssl_keystore_path }}
+          SOLR_SSL_KEY_STORE_PASSWORD={{ solr_ssl_keystore_password }}
+          SOLR_SSL_TRUST_STORE={{ solr_ssl_keystore_path }}
+          SOLR_SSL_TRUST_STORE_PASSWORD={{ solr_ssl_keystore_password }}
+        state: present
+        insertafter: "SOLR_PORT=8983"

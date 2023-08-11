@@ -1,0 +1,71 @@
+---
+- name: Install Apache Tomcat with Symbolic Links
+  hosts: tomcat_servers
+  become: yes
+
+  vars:
+    tomcat_version: "9"   # Change this to the desired Tomcat version
+    tomcat_user: "tomcat"
+    tomcat_group: "tomcat"
+    tomcat_install_dir: "/opt/tomcat"
+    tomcat_home_link: "/opt/tomcat-latest"  # Change this to the desired symlink location
+
+  tasks:
+    - name: Create Tomcat user
+      user:
+        name: "{{ tomcat_user }}"
+        home: "{{ tomcat_install_dir }}"
+        shell: "/bin/bash"
+        system: yes
+        state: present
+
+    - name: Download Tomcat
+      get_url:
+        url: "https://downloads.apache.org/tomcat/tomcat-{{ tomcat_version }}/v{{ tomcat_version }}.tar.gz"
+        dest: "/tmp/tomcat.tar.gz"
+
+    - name: Extract Tomcat
+      unarchive:
+        src: "/tmp/tomcat.tar.gz"
+        dest: "{{ tomcat_install_dir }}"
+        remote_src: yes
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_group }}"
+
+    - name: Set Tomcat permissions
+      file:
+        path: "{{ tomcat_install_dir }}"
+        state: directory
+        recurse: yes
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_group }}"
+        mode: "0755"
+
+    - name: Create a symlink to the Tomcat installation
+      file:
+        src: "{{ tomcat_install_dir }}"
+        dest: "{{ tomcat_home_link }}"
+        state: link
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_group }}"
+
+    - name: Start Tomcat
+      shell: "{{ tomcat_install_dir }}/bin/startup.sh"
+      async: 300
+      poll: 0
+      become_user: "{{ tomcat_user }}"
+      ignore_errors: yes
+      register: tomcat_start
+
+    - name: Wait for Tomcat to start
+      async_status:
+        jid: "{{ tomcat_start.ansible_job_id }}"
+      register: tomcat_start_result
+      until: tomcat_start_result.finished
+      retries: 60
+      delay: 5
+
+    - name: Check Tomcat start result
+      debug:
+        msg: "Tomcat started successfully!"
+      when: tomcat_start_result.finished and tomcat_start_result.returncode == 0

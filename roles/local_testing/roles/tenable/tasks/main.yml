@@ -1,0 +1,25 @@
+---
+- hosts: your_target_host
+  become: true
+  vars:
+    tenable_s3_bucket: your-s3-bucket
+    tenable_s3_key: path/to/tenable-agent.rpm
+    installation_variables: "--key=value --another-key=another-value"  # Customize installation variables
+
+  tasks:
+    - name: Download Tenable agent installer from S3
+      aws_s3:
+        bucket: "{{ tenable_s3_bucket }}"
+        object: "{{ tenable_s3_key }}"
+        dest: /tmp/tenable-agent.rpm
+
+    - name: Install Tenable agent
+      yum:
+        name: /tmp/tenable-agent.rpm
+        state: present
+
+    - name: Run Tenable agent installation script with variables
+      command: /opt/tenable/agent/bin/tenable-installer.sh {{ installation_variables }}
+      args:
+        executable: /bin/bash
+      creates: /opt/tenable/agent/tenableagent.pid

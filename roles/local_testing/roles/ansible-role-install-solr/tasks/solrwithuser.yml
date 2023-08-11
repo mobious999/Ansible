@@ -1,0 +1,71 @@
+---
+- name: Install Apache Solr
+  hosts: solr_servers
+  become: yes
+
+  vars:
+    solr_version: "8.11.1"   # Change this to the desired Solr version
+    solr_user: "solr"
+    solr_group: "solr"
+    solr_install_dir: "/opt/solr"
+    solr_data_dir: "/var/solr/data"  # Change this to the desired data directory path
+
+  tasks:
+    - name: Create Solr user
+      user:
+        name: "{{ solr_user }}"
+        home: "{{ solr_install_dir }}"
+        shell: "/bin/bash"
+        system: yes
+        state: present
+
+    - name: Create Solr data directory
+      file:
+        path: "{{ solr_data_dir }}"
+        state: directory
+        owner: "{{ solr_user }}"
+        group: "{{ solr_group }}"
+        mode: "0755"
+
+    - name: Download Apache Solr
+      get_url:
+        url: "https://downloads.apache.org/lucene/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz"
+        dest: "/tmp/solr.tgz"
+
+    - name: Extract Solr
+      unarchive:
+        src: "/tmp/solr.tgz"
+        dest: "{{ solr_install_dir }}"
+        remote_src: yes
+        owner: "{{ solr_user }}"
+        group: "{{ solr_group }}"
+
+    - name: Set Solr permissions
+      file:
+        path: "{{ solr_install_dir }}"
+        state: directory
+        recurse: yes
+        owner: "{{ solr_user }}"
+        group: "{{ solr_group }}"
+        mode: "0755"
+
+    - name: Start Solr
+      shell: "{{ solr_install_dir }}/bin/solr start -p 8983 -s {{ solr_data_dir }}"
+      async: 300
+      poll: 0
+      become_user: "{{ solr_user }}"
+      ignore_errors: yes
+      register: solr_start
+
+    - name: Wait for Solr to start
+      async_status:
+        jid: "{{ solr_start.ansible_job_id }}"
+      register: solr_start_result
+      until: solr_start_result.finished
+      retries: 60
+      delay: 5
+
+    - name: Check Solr start result
+      debug:
+        msg: "Solr started successfully!"
+      when: solr_start_result.finished and solr_start_result.returncode == 0

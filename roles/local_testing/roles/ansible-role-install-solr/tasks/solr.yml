@@ -1,0 +1,72 @@
+---
+- name: Install Apache Solr
+  hosts: solr_servers
+  become: yes
+
+  vars:
+    solr_version: "8.11.1"   # Change this to the desired Solr version
+    solr_port: "8983"        # Change this to the desired Solr port
+    solr_install_dir: "/opt/solr"
+    solr_data_dir: "/var/solr/data"  # Change this to the desired data directory path
+
+  tasks:
+    - name: Install Java (OpenJDK 11) (for Debian/Ubuntu-based systems)
+      apt:
+        name: openjdk-11-jdk
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Java (OpenJDK 11) (for RedHat/CentOS-based systems)
+      yum:
+        name: java-11-openjdk-devel
+        state: present
+      when: ansible_os_family == 'RedHat'
+
+    - name: Create Solr data directory
+      file:
+        path: "{{ solr_data_dir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
+
+    - name: Download Apache Solr
+      get_url:
+        url: "https://downloads.apache.org/lucene/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz"
+        dest: "/tmp/solr.tgz"
+
+    - name: Extract Solr
+      unarchive:
+        src: "/tmp/solr.tgz"
+        dest: "{{ solr_install_dir }}"
+        remote_src: yes
+
+    - name: Set Solr permissions
+      file:
+        path: "{{ solr_install_dir }}"
+        state: directory
+        recurse: yes
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
+
+    - name: Start Solr
+      shell: "{{ solr_install_dir }}/bin/solr start -p {{ solr_port }} -s {{ solr_data_dir }}"
+      async: 300
+      poll: 0
+      become_user: "{{ ansible_user }}"
+      ignore_errors: yes
+      register: solr_start
+
+    - name: Wait for Solr to start
+      async_status:
+        jid: "{{ solr_start.ansible_job_id }}"
+      register: solr_start_result
+      until: solr_start_result.finished
+      retries: 60
+      delay: 5
+
+    - name: Check Solr start result
+      debug:
+        msg: "Solr started successfully!"
+      when: solr_start_result.finished and solr_start_result.returncode == 0

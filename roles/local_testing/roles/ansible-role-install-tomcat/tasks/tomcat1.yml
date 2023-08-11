@@ -1,0 +1,81 @@
+---
+- name: Install and Configure Tomcat
+  hosts: tomcat_servers
+  become: yes
+
+  vars:
+    tomcat_version: "9"   # Change this to the desired Tomcat version
+    tomcat_port: "8080"   # Change this to the desired Tomcat port
+    tomcat_user: "tomcat"
+    tomcat_install_dir: "/opt/tomcat"
+    java_package: "openjdk-11-jdk"  # Change this based on your desired Java package
+
+  tasks:
+    - name: Update apt cache (for Debian/Ubuntu-based systems)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install required packages
+      apt:
+        name:
+          - {{ java_package }}
+          - unzip
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install required packages (for RedHat/CentOS-based systems)
+      yum:
+        name:
+          - java-11-openjdk-devel  # Change this based on your desired Java package for RedHat/CentOS
+          - unzip
+        state: present
+      when: ansible_os_family == 'RedHat'
+
+    - name: Download Tomcat
+      get_url:
+        url: "https://downloads.apache.org/tomcat/tomcat-{{ tomcat_version }}/v{{ tomcat_version }}.tar.gz"
+        dest: "/tmp/tomcat.tar.gz"
+
+    - name: Extract Tomcat
+      unarchive:
+        src: "/tmp/tomcat.tar.gz"
+        dest: "{{ tomcat_install_dir }}"
+        remote_src: yes
+
+    - name: Set Tomcat permissions
+      file:
+        path: "{{ tomcat_install_dir }}"
+        state: directory
+        recurse: yes
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_user }}"
+        mode: "0755"
+
+    - name: Configure Tomcat's server.xml
+      template:
+        src: "server.xml.j2"
+        dest: "{{ tomcat_install_dir }}/conf/server.xml"
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_user }}"
+
+    - name: Start Tomcat
+      shell: "{{ tomcat_install_dir }}/bin/startup.sh"
+      async: 300
+      poll: 0
+      become_user: "{{ tomcat_user }}"
+      ignore_errors: yes
+      register: tomcat_start
+
+    - name: Wait for Tomcat to start
+      async_status:
+        jid: "{{ tomcat_start.ansible_job_id }}"
+      register: tomcat_start_result
+      until: tomcat_start_result.finished
+      retries: 60
+      delay: 5
+
+    - name: Check Tomcat start result
+      debug:
+        msg: "Tomcat started successfully!"
+      when: tomcat_start_result.finished and tomcat_start_result.returncode == 0

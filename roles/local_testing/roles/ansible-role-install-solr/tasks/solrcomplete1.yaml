@@ -1,0 +1,147 @@
+---
+- name: Install Apache Solr with SSL and Create Service File with Symbolic Links
+  hosts: your_target_servers
+  become: yes
+
+  vars:
+    solr_version: "9.0.0"   # Change this to the desired Solr version
+    solr_user: "solr"
+    solr_group: "solr"
+    solr_install_dir: "/opt/solr"
+    solr_data_dir: "/var/solr/data"
+    solr_home_link: "/opt/solr-latest"  # Change this to the desired symlink location
+    solr_ssl_dir: "{{ solr_install_dir }}/ssl"
+    solr_ssl_keystore_password: "your_keystore_password"  # Change this to your desired keystore password
+    solr_ssl_keystore_path: "{{ solr_ssl_dir }}/keystore.jks"
+    solr_ssl_keystore_cert_path: "{{ solr_ssl_dir }}/cert.pem"
+    solr_ssl_keystore_key_path: "{{ solr_ssl_dir }}/key.pem"
+
+  tasks:
+    - name: Create Solr user
+      user:
+        name: "{{ solr_user }}"
+        home: "{{ solr_install_dir }}"
+        shell: "/bin/bash"
+        system: yes
+        state: present
+
+    - name: Install required packages (for Debian/Ubuntu-based systems)
+      apt:
+        name:
+          - openjdk-11-jdk
+          - unzip
+          - openssl
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install required packages (for RedHat/CentOS-based systems)
+      yum:
+        name:
+          - java-11-openjdk-devel
+          - unzip
+          - openssl
+        state: present
+      when: ansible_os_family == 'RedHat'
+
+    - name: Download Solr
+      get_url:
+        url: "https://downloads.apache.org/lucene/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz"
+        dest: "/tmp/solr.tar.gz"
+
+    - name: Extract Solr
+      unarchive:
+        src: "/tmp/solr.tar.gz"
+        dest: "{{ solr_install_dir }}"
+        remote_src: yes
+        owner: "{{ solr_user }}"
+        group: "{{ solr_group }}"
+
+    - name: Set Solr permissions
+      file:
+        path: "{{ solr_install_dir }}"
+        state: directory
+        recurse: yes
+        owner: "{{ solr_user }}"
+        group: "{{ solr_group }}"
+        mode: "0755"
+
+    - name: Create a symlink to the Solr installation
+      file:
+        src: "{{ solr_install_dir }}"
+        dest: "{{ solr_home_link }}"
+        state: link
+        owner: "{{ solr_user }}"
+        group: "{{ solr_group }}"
+
+    - name: Create Solr SSL directory
+      file:
+        path: "{{ solr_ssl_dir }}"
+        state: directory
+        owner: "{{ solr_user }}"
+        group: "{{ solr_group }}"
+        mode: "0700"
+
+    - name: Generate SSL certificates
+      openssl_certificate:
+        path: "{{ item.path }}"
+        privatekey_path: "{{ item.key }}"
+        privatekey_type: RSA
+        privatekey_passphrase: "{{ solr_ssl_keystore_password }}"
+        csr_path: "{{ item.csr }}"
+        csr_subject: "/C=US/ST=California/L=San Francisco/O=Example/CN=localhost"
+        provider: selfsigned
+      with_items:
+        - { path: "{{ solr_ssl_keystore_cert_path }}", key: "{{ solr_ssl_keystore_key_path }}", csr: "/tmp/solr.csr" }
+
+    - name: Convert SSL certificate and key to PKCS12 format
+      openssl_pkcs12:
+        path: "{{ solr_ssl_keystore_path }}"
+        passphrase: "{{ solr_ssl_keystore_password }}"
+        state: present
+        cert_file: "{{ solr_ssl_keystore_cert_path }}"
+        key_file: "{{ solr_ssl_keystore_key_path }}"
+
+    - name: Copy SSL certificate to Solr configuration directory
+      copy:
+        src: "{{ solr_ssl_keystore_cert_path }}"
+        dest: "{{ solr_install_dir }}/server/etc/cert.pem"
+        owner: "{{ solr_user }}"
+        group: "{{ solr_group }}"
+        mode: "0644"
+
+    - name: Copy SSL key to Solr configuration directory
+      copy:
+        src: "{{ solr_ssl_keystore_key_path }}"
+        dest: "{{ solr_install_dir }}/server/etc/key.pem"
+        owner: "{{ solr_user }}"
+        group: "{{ solr_group }}"
+        mode: "0640"
+
+    - name: Configure Solr to use SSL in solr.in.sh
+      lineinfile:
+        path: "{{ solr_install_dir }}/bin/solr.in.sh"
+        line: |
+          SOLR_SSL_KEY_STORE={{ solr_ssl_keystore_path }}
+          SOLR_SSL_KEY_STORE_PASSWORD={{ solr_ssl_keystore_password }}
+          SOLR_SSL_TRUST_STORE={{ solr_ssl_keystore_path }}
+          SOLR_SSL_TRUST_STORE_PASSWORD={{ solr_ssl_keystore_password }}
+        state: present
+        insertafter: "SOLR_PORT=8983"
+
+    - name: Create Solr service file
+      template:
+        src: solr.service.j2
+        dest: "/etc/systemd/system/solr.service"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    - name: Reload systemd manager configuration
+      systemd:
+        daemon_reload: yes
+
+    - name: Start Solr service and enable it on boot
+      service:
+        name: solr
+        state: started
+        enabled: yes
