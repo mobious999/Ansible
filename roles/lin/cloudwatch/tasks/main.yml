@@ -1,0 +1,45 @@
+---
+- hosts: your_target_host
+  become: true
+  vars:
+    cloudwatch_agent_ssm_parameter: /your/ssm/parameter  # Replace with your SSM parameter name
+
+  tasks:
+    - name: Ensure required packages are installed
+      package:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - wget
+      when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8'
+
+    - name: Download CloudWatch Agent installer
+      get_url:
+        url: "https://s3.amazonaws.com/amazoncloudwatch-agent/redhat/amd64/latest/amazon-cloudwatch-agent.rpm"
+        dest: /tmp/amazon-cloudwatch-agent.rpm
+      when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8'
+
+    - name: Install CloudWatch Agent
+      yum:
+        name: /tmp/amazon-cloudwatch-agent.rpm
+        state: present
+      when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '8'
+
+    - name: Fetch CloudWatch Agent configuration from SSM Parameter Store
+      aws_ssm_parameter_facts:
+        region: your_aws_region
+        name: "{{ cloudwatch_agent_ssm_parameter }}"
+      register: ssm_parameter
+
+    - name: Write CloudWatch Agent configuration to file
+      copy:
+        content: "{{ ssm_parameter.parameters[0].value }}"
+        dest: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+      when: ssm_parameter.parameters[0].value is defined
+
+    - name: Start and enable CloudWatch Agent service
+      systemd:
+        name: amazon-cloudwatch-agent
+        enabled: yes
+        state: started
+      when: ssm_parameter.parameters[0].value is defined

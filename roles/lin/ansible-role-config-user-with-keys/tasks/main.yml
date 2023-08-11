@@ -1,0 +1,39 @@
+---
+- name: Create a new user with updated keys and permissions
+  hosts: your_target_host
+  become: yes
+
+  vars:
+    new_username: newuser
+    ssh_keys_directory: /path/to/ssh_keys
+
+  tasks:
+    - name: Create the new user
+      user:
+        name: "{{ new_username }}"
+        state: present
+        create_home: yes
+
+    - name: Copy private key
+      template:
+        src: private_key.j2
+        dest: "/home/{{ new_username }}/.ssh/id_rsa"
+      mode: '0600'
+      owner: "{{ new_username }}"
+      group: "{{ new_username }}"
+
+    - name: Copy public key
+      template:
+        src: public_key.j2
+        dest: "/home/{{ new_username }}/.ssh/id_rsa.pub"
+      mode: '0644'
+      owner: "{{ new_username }}"
+      group: "{{ new_username }}"
+
+    - name: Copy authorized keys
+      template:
+        src: authorized_keys.j2
+        dest: "/home/{{ new_username }}/.ssh/authorized_keys"
+      mode: '0600'
+      owner: "{{ new_username }}"
+      group: "{{ new_username }}"
