@@ -11,14 +11,14 @@
     - configuration
     - limit
 
-- name: Manage PAM entries
-  lineinfile:
-    dest: "/etc/pam.d/{{ item }}"
-    regexp: 'session[\s]+required[\s]+pam_limits.so'
-    line: "session required pam_limits.so"
-    state: "{{ limit_check_state }}"
-  with_items: ["{{ limit_check_files }}"]
-  when: "limit_check"
-  tags:
-    - configuration
-    - limit
+# - name: Manage PAM entries
+#   lineinfile:
+#     dest: "/etc/pam.d/{{ item }}"
+#     regexp: 'session[\s]+required[\s]+pam_limits.so'
+#     line: "session required pam_limits.so"
+#     state: "{{ limit_check_state }}"
+#   with_items: ["{{ limit_check_files }}"]
+#   when: "limit_check"
+#   tags:
+#     - configuration
+#     - limit

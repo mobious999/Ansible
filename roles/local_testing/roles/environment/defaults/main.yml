@@ -2,7 +2,6 @@
 # Default variables
 # =================
 project_name: "wfl"
-
 eis_pass: "Exigen/A"
 
 # User to add
@@ -107,4 +106,3 @@ install_yum_cron: "true"
 exclude_yum_cron: "docker* wazuh* kubeadm* kubectl* kubelet* container*"
 fix_python_backports_ssl_match_hostname: false
 
-no_log: true

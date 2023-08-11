@@ -2,5 +2,8 @@
 - hosts: all
   become: True
   roles:
-    - awscli 
+    - selinux
+    - awscli
+    - ssm
+    - ant
 #

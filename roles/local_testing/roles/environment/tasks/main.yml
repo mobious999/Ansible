@@ -19,10 +19,6 @@
   include: sshd.yml
   when: environment_sshd == "true"
 
-- name: Include selinux management
-  include: selinux.yml
-    when: environment_selinux == "true"
-
 - name: Include service management
   include: services.yml
   when: environment_service
@@ -33,9 +29,3 @@
 
 - name: Report
   include: report.yml
-
-- name: Include awscli
-  include: awscli.yml
-
-- name: Include cloudwatch
-  include: cloudwatch.yml

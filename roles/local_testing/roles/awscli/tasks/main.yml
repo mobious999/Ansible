@@ -1,38 +1,33 @@
 ---
-- hosts: your_target_host
-  become: true
-  tasks:
-    - name: Install AWS CLI dependencies
-      apt:
-        name:
-          - unzip
-          - python3
-          - python3-pip
-        state: present
-      when: ansible_os_family == "Debian"
+- name: Install AWS CLI dependencies
+  apt:
+    name:
+      - unzip
+      - python3
+      - python3-pip
+    state: present
+  when: ansible_os_family == "Debian"
 
-    - name: Install AWS CLI dependencies
-      yum:
-        name:
-          - unzip
-          - python3
-          - python3-pip
-        state: present
-      when: ansible_os_family == "RedHat"
+- name: Install AWS CLI dependencies
+  yum:
+    name:
+      - unzip
+      - python3
+      - python3-pip
+    state: present
+  when: ansible_os_family == "RedHat"
 
-    - name: Install AWS CLI
-      pip:
-        name: awscli
-        executable: pip3
+- name: Download the awscli bundle.
+  get_url: url=https://s3.amazonaws.com/aws-cli/awscli-bundle.zip dest=/tmp/awscli-bundle.zip
+  register: aws_cli_download_bundle
 
-    - name: Add AWS CLI executable to PATH
-      lineinfile:
-        dest: "{{ ansible_env.HOME }}/.bashrc"
-        line: 'export PATH="$PATH:{{ ansible_env.HOME }}/.local/bin"'
-        create: yes
-        insertafter: EOF
-      register: bashrc_result
+- name: Unarchive the installer.
+  unarchive: src=/tmp/awscli-bundle.zip dest=/tmp copy=no creates=/tmp/awscli-bundle
+  when: aws_cli_download_bundle.changed
+  register: aws_cli_unarchive_installer
 
-    - name: Reload .bashrc if necessary
-      command: "source {{ ansible_env.HOME }}/.bashrc"
-      when: bashrc_result.matched > 0
+- name: Install awscli package.
+  shell: python /tmp/awscli-bundle/install
+  args:
+    creates: /usr/bin/aws
+  when: aws_cli_unarchive_installer.changed
