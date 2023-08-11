@@ -1,6 +1,0 @@
----
-- hosts: your_target_host
-  tasks:
-    - name: Include the Ant role
-      include_role:
-        name: ant

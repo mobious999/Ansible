@@ -1,8 +1,0 @@
----
-- name: Modify Cloud cfg configuration
-  lineinfile:
-    path: "/etc/cloud/cloud.cfg"
-    regexp: '{{ "^ssh_pwauth: 1" | regex_replace(" .*$", "") }}'
-    line: '{{ "^ssh_pwauth: 1" | regex_replace("\^", "") }}'
-    state: "present"
-    # validate: "/usr/sbin/sshd -t -f %s"

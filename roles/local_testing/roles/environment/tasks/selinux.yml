@@ -1,0 +1,12 @@
+---
+- name: Disable Selinux
+  tasks:
+          - name: Disabling SELinux
+            ansible.posix.selinux:
+                    state: disabled
+            register: selinuxdisabled
+          - name: Print the changes in Configurtion file 
+            ansible.builtin.command: grep SELINUX /etc/sysconfig/selinux
+            register: sevalue
+          - ansible.builtin.debug:
+                  var: sevalue.stdout_lines

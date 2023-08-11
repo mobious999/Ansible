@@ -1,6 +1,7 @@
 ---
-- hosts: local
-  connection: local
+- hosts: all
   become: True
   roles:
+    - ant
     - environment
+#

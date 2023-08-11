@@ -1,0 +1,110 @@
+---
+# Default variables
+# =================
+project_name: "wfl"
+
+eis_pass: "Exigen/A"
+
+# User to add
+user:
+  - [{ "username": "eis", "password": "{{ eis_pass }}" }]
+
+# User's home directory
+user_home: /home
+
+# User's shell
+user_shell: /bin/bash
+
+# Purpose of the account (system or regular user)
+user_system: no
+
+# Force user deletion
+user_force: no
+
+# Remove user's home directory when deleting account
+user_remove: no
+
+# User state
+user_state: present
+
+# User password
+user_pass: "$6$rounds=656000$CKglMi27S0bbfwZG$JFjBsewJVzs9lBdE2fyoOD6/.Sz3eJgyeh0Sa732H33NIBQ7sUlsq1ZAGvzY6QBFcRvYabIO1BwaUguIEr.y4."
+
+# Limit domains to add
+limit:
+  [
+    { "domain": "*", "type": "soft", "item": "nproc", "value": "65000" },
+    { "domain": "*", "type": "hard", "item": "nproc", "value": "65000" },
+    { "domain": "*", "type": "soft", "item": "nofile", "value": "65000" },
+    { "domain": "*", "type": "hard", "item": "nofile", "value": "65000" },
+    { "domain": "root", "type": "soft", "item": "nproc", "value": "unlimited" },
+  ]
+
+# Limit file name
+limit_filename: "limit.conf"
+
+# Limit file owner
+limit_user: "root"
+
+# Limit file group
+limit_group: "root"
+
+# Limit file permisions
+limit_chmod: "0644"
+
+# Limit file backup
+limit_backup: "no"
+
+# Check that 'session required pam_limits.so' is present in /etc/pam.d/<limit_check_files>
+limit_check: "True"
+
+# Check running mode
+limit_check_state: "present"
+
+# Files with PAM entiries to check
+limit_check_files: []
+
+# Dictionary with kernel parameters to set.
+# Change it to an empty to disable the kernel configuration.
+sysctl:
+  - name: swap
+    path: "/etc/sysctl.d/swap.conf"
+    configuration:
+      - "vm.swappiness=60"
+      - "vm.vfs_cache_pressure=100"
+
+# Dictionary with SSH parameters to set
+sshd:
+  - path: "/etc/ssh/sshd_config"
+    configuration:
+      - "^PasswordAuthentication yes"
+
+# Swap creation method
+swap_method: "dd"
+
+# Swap files array
+swap: ["/swapfile"]
+
+# Swap file priority
+swap_priority: "-1"
+
+# Swap file size
+swap_size: "8196"
+
+# Cloud-init
+cloudinit_directory: /etc/cloud/cloud.cfg.d
+cloudinit_template: cloudinit-config.j2
+
+environment_service: False
+environment_hostname: False
+environment_swap: "true"
+environment_sshd: "true"
+environment_limit: "true"
+environment_selinux: "true"
+update_hostname: "true"
+yum_update: "true"
+install_yum_cron: "true"
+exclude_yum_cron: "docker* wazuh* kubeadm* kubectl* kubelet* container*"
+fix_python_backports_ssl_match_hostname: false
+
+no_log: true
