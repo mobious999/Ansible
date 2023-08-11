@@ -1,0 +1,18 @@
+---
+- hosts: your_target_host
+  become: true
+  tasks:
+    - name: Disable SELinux temporarily
+      lineinfile:
+        dest: /etc/selinux/config
+        regexp: '^SELINUX='
+        line: 'SELINUX=disabled'
+      notify: Reboot if SELinux is currently enabled
+      register: selinux_changed
+      changed_when: selinux_changed.changed
+
+  handlers:
+    - name: Reboot if SELinux is currently enabled
+      ansible.builtin.reboot:
+        msg: "Rebooting to apply SELinux configuration"
+      when: selinux_changed.changed
