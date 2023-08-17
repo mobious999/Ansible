@@ -1,5 +1,5 @@
 ---
-- name: Install AWS CLI dependencies if not already installed
+- name: Install AWS CLI dependencies
   apt:
     name:
       - unzip
@@ -8,7 +8,7 @@
     state: present
   when: ansible_os_family == "Debian"
 
-- name: Install AWS CLI dependencies if not already installed
+- name: Install AWS CLI dependencies
   yum:
     name:
       - unzip

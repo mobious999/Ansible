@@ -1,0 +1,13 @@
+---
+  - name: Add repo rhel-t-stage
+    yum_repositoriy:
+      name: rhel-t-stage
+      description: “Repo for hosts in testing”
+      baseurl: “http://mirror.example.com/rhel-t-stage”
+      gpgcheck: yes
+      gpgkey: file:///etc/pki/gpg-key
+
+  - name: Install git
+    yum:
+      name: git
+      state: latest
