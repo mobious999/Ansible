@@ -31,3 +31,46 @@
   args:
     creates: /usr/bin/aws
   when: aws_cli_unarchive_installer.changed
+
+- name: Creating the file to add aws to the path
+  file:
+    path: "/etc/profile.d/aws.sh"
+    state: touch
+    mode: 0644
+    owner: root
+
+- name: Set environment variables for Aws Cli (for Debian-based systems)
+  become: true
+  become_user: root
+  lineinfile:
+    dest: /etc/environment
+    line: 'AWS_HOME="/usr/local/bin"'
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: Set environment variables for Aws Cli (for RedHat-based systems)
+  become: true
+  become_user: root
+  lineinfile:
+    dest: /etc/profile.d/aws.sh
+    line: 'export AWS_HOME="/usr/local/bin"'
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Add Aws Cli executable to PATH (for Debian-based systems)
+  become: true
+  become_user: root
+  lineinfile:
+    dest: /etc/environment
+    line: 'PATH="$PATH:$AWS_HOME/bin"'
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: Add Aws Cli executable to PATH (for RedHat-based systems)
+  become: true
+  become_user: root
+  lineinfile:
+    dest: /etc/profile.d/aws.sh
+    line: 'export PATH="$PATH:$AWS_HOME/bin"'
+    state: present
+  when: ansible_os_family == 'RedHat'
