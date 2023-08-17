@@ -1,0 +1,28 @@
+---
+eis_pass: "Exigen/A"
+
+user:
+  - [{ "username": "eis", "password": "{{ eis_pass }}" }]
+
+# User's home directory
+user_home: /home
+
+# User's shell
+user_shell: /bin/bash
+
+# Purpose of the account (system or regular user)
+user_system: no
+
+# Force user deletion
+user_force: no
+
+# Remove user's home directory when deleting account
+user_remove: no
+
+# User state
+user_state: present
+
+# User password
+user_pass: "$6$rounds=656000$CKglMi27S0bbfwZG$JFjBsewJVzs9lBdE2fyoOD6/.Sz3eJgyeh0Sa732H33NIBQ7sUlsq1ZAGvzY6QBFcRvYabIO1BwaUguIEr.y4."
+
+

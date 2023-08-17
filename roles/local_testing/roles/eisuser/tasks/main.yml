@@ -1,0 +1,23 @@
+---
+- name: Manage users
+  user:
+    name: "{{ item.username }}"
+    password: "{{ (item.password | password_hash('sha512')) | default(user_pass | password_hash('sha512')) }}"
+    comment: "{{ item.comment | default(omit) }}"
+    home: "{{ item.home | default(user_home ~ '/' ~ item.username ) }}"
+    shell: "{{ item.shell | default(user_shell) }}"
+    system: "{{ item.system | default(user_system) }}"
+    force: "{{ item.force | default(user_force) }}"
+    remove: "{{ item.remove | default(user_remove) }}"
+    state: "{{ item.state | default(user_state) }}"
+  with_items: "{{ user }}"
+  tags:
+    - configuration
+    - user
+  no_log: "{{ no_log }}"
+
+- name: Chown eis
+  file:
+    path: /home/eis
+    owner: eis
+    group: eis

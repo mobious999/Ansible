@@ -1,6 +1,13 @@
 ---
-- name: add gnupg key for codership repo
-  apt-key: keyserver=keyserver.ubuntu.com id=BC19DDBA
+  - name: Add repo rhel-t-stage
+    yum_repositoriy:
+      name: rhel-t-stage
+      description: “Repo for hosts in testing”
+      baseurl: “http://mirror.example.com/rhel-t-stage”
+      gpgcheck: yes
+      gpgkey: file:///etc/pki/gpg-key
 
-- name: add repo
-  apt_repository: repo='deb http://ubuntu-cloud.archive.canonical.com/{{ ansible_distribution | lower }} {{ ansible_distribution_release }}-updates/liberty main' state=present
+  - name: Install git
+    yum:
+      name: git
+      state: latest
