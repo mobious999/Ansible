@@ -1,12 +1,25 @@
 ---
-- name: install system updates for centos systems
-  yum: name=* state=latest update_cache=yes
-  when: ansible_distribution == "CentOS"
+- name: Update packages on Debian/Ubuntu
+  when: ansible_distribution in ['Debian', 'Ubuntu']
+  apt:
+    upgrade: 'safe'
 
-- name: install system updates for ubuntu systems
-  apt: upgrade=dist update_cache=yes
-  when: ansible_distribution == "Ubuntu"
+- name: Update packages on Red Hat/CentOS
+  when: ansible_distribution in ['RedHat', 'CentOS']
+  yum:
+    name: '*'
+    state: latest
 
-- name: install system updates for Redhat systems
-  yum: name=* state=latest update_cache=yes
-  when: ansible_distribution == "Redhat"
+- name: Update packages on Fedora
+  when: ansible_distribution == 'Fedora'
+  dnf:
+    name: '*'
+    state: latest
+
+- name: Update packages on SUSE
+  when: ansible_distribution == 'SUSE'
+  zypper:
+    name: '*'
+    state: latest
+
+    # Add more tasks for other operating systems if needed

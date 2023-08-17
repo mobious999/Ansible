@@ -1,0 +1,25 @@
+---
+- name: Configure DNS Resolver with AWS Best Practices
+  hosts: your_target_hosts
+  become: yes
+
+  tasks:
+    - name: Install necessary packages
+      package:
+        name: bind-utils
+        state: present
+
+    - name: Configure DNS resolver
+      lineinfile:
+        path: /etc/systemd/resolved.conf
+        line: |
+          [Resolve]
+          DNS=169.254.169.253
+          # Additional settings...
+      notify: Restart Systemd-Resolved
+
+  handlers:
+    - name: Restart Systemd-Resolved
+      systemd:
+        name: systemd-resolved
+        state: restarted

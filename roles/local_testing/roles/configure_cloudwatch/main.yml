@@ -1,0 +1,23 @@
+---
+- name: Fetch CloudWatch Configuration
+  hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Get OS Info
+      setup:
+        filter: ansible_distribution* ansible_distribution_major_version
+
+    - name: Generate SSM Parameter Name
+      set_fact:
+        ssm_parameter_name: "{{ 'CloudWatchConfig-RedHat-' + ansible_distribution_major_version }}"
+
+    - name: Fetch CloudWatch Configuration
+      aws_ssm_parameter_facts:
+        region: your_aws_region
+        names: "{{ ssm_parameter_name }}"
+      when: "'RedHat' in ansible_distribution"
+
+    - name: Debug CloudWatch Configuration
+      debug:
+        var: cloudwatch_config
