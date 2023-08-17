@@ -1,0 +1,14 @@
+---
+- name: Perform tasks based on third octet of IP address
+  hosts: localhost
+  gather_facts: yes
+
+  tasks:
+    - name: Extract third octet of IP address
+      set_fact:
+        third_octet: "{{ ansible_default_ipv4.address.split('.')[2] }}"
+
+    - name: Debug tasks
+      debug:
+        msg: "Perform tasks for IP {{ ansible_default_ipv4.address }} with third octet matching 10, 20, or 30"
+      when: third_octet|int in [10, 20, 30]

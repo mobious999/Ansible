@@ -1,0 +1,20 @@
+---
+- name: Install Java and Prevent Updates
+  hosts: your_target_hosts
+  become: yes
+
+  vars:
+    java_version: 11.0.17.0.8-1.el8_7.x86_64
+    package_name: java-11-openjdk-{{ java_version }}
+    package_state: present
+
+  tasks:
+    - name: Install Java package
+      dnf:
+        name: "{{ package_name }}"
+        state: "{{ package_state }}"
+
+    - name: Create dnf exclude file for Java updates
+      copy:
+        content: "exclude={{ package_name }}"
+        dest: /etc/dnf/dnf.conf.d/exclude_java_updates.conf

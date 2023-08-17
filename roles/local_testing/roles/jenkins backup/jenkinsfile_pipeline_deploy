@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Backup') {
+            steps {
+                echo 'Performing backup...'
+                // Insert backup commands here
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo 'Deploying...'
+                // Insert deployment commands here
+            }
+        }
+        
+        stage('Trigger Remote Job') {
+            steps {
+                script {
+                    echo 'Triggering remote job...'
+                    build job: 'YourRemoteJobName', parameters: [
+                        [$class: 'StringParameterValue', name: 'PARAM_NAME', value: 'param_value']
+                    ], authenticationToken: 'backup-token'
+                }
+            }
+        }
+    }
+    
+    triggers {
+        buildToken {
+            authenticationToken 'backup-token'
+        }
+    }
+}
+#curl -u user:backup-token "http://jenkins-server/job/your-pipeline/build?token=backup-token"
+#wget --auth-no-challenge --http-user=user --http-password=backup-token "http://jenkins-server/job/your-pipeline/build?token=backup-token"

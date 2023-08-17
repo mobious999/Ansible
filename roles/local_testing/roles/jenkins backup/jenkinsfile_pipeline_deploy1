@@ -1,0 +1,28 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Backup') {
+            steps {
+                echo 'Performing backup...'
+                // Insert backup commands here
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo 'Deploying...'
+                // Insert deployment commands here
+            }
+        }
+        
+        stage('Trigger Remote Job') {
+            steps {
+                echo 'Triggering remote job...'
+                build job: 'YourRemoteJobName', parameters: [
+                    string(name: 'PARAM_NAME', value: 'param_value')
+                ]
+            }
+        }
+    }
+}

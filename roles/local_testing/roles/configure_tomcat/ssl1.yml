@@ -1,0 +1,38 @@
+---
+- name: Configure Tomcat SSL with Keystore
+  hosts: your_target_hosts
+  become: yes
+
+  vars:
+    tomcat_installation_dir: /opt/tomcat  # Adjust to your Tomcat installation directory
+    keystore_path: /opt/keystore/p12/uat.p12
+    keystore_password: changeme
+
+  tasks:
+    - name: Configure Tomcat SSL in server.xml
+      lineinfile:
+        path: "{{ tomcat_installation_dir }}/conf/server.xml"
+        line: |
+          <Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+                     SSLEnabled="true"
+                     maxThreads="150"
+                     scheme="https" secure="true" clientAuth="false"
+                     sslProtocol="TLS"
+                     keystoreFile="{{ keystore_path }}"
+                     keystorePass="{{ keystore_password }}"
+                     keystoreType="PKCS12"
+                     truststoreFile="{{ tomcat_installation_dir }}/conf/cacerts"
+                     truststorePass="changeit"
+                     SSLHonorCipherOrder="true"
+                     ciphers="TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+                     disableUploadTimeout="true" />
+        insertafter: '<!-- Define a SSL HTTP/1.1 Connector on port 8443 -->'
+        state: present
+      notify:
+        - Restart Tomcat
+
+  handlers:
+    - name: Restart Tomcat
+      service:
+        name: tomcat
+        state: restarted

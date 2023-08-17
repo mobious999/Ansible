@@ -1,0 +1,66 @@
+---
+- name: Configure Apache Tomcat with SSL
+  hosts: your_target_hosts
+  become: yes
+
+  vars:
+    tomcat_installation_dir: "/opt/tomcat"  # Change to your Tomcat installation directory
+    tomcat_user: "tomcat"
+    tomcat_group: "tomcat"
+    ssl_certificate_path: "/path/to/ssl/certificate.crt"
+    ssl_private_key_path: "/path/to/ssl/private_key.key"
+    ssl_certificate_chain_path: "/path/to/ssl/certificate_chain.crt"
+    ssl_keystore_password: "your_keystore_password"
+    tomcat_memory_initial: "4G"
+    tomcat_memory_max: "16G"
+
+  tasks:
+    - name: Copy SSL Certificate and Key Files
+      copy:
+        src: "{{ item }}"
+        dest: "{{ tomcat_installation_dir }}/conf/"
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_group }}"
+        mode: 0644
+      loop:
+        - "{{ ssl_certificate_path }}"
+        - "{{ ssl_private_key_path }}"
+        - "{{ ssl_certificate_chain_path }}"
+
+    - name: Configure SSL Connector
+      lineinfile:
+        path: "{{ tomcat_installation_dir }}/conf/server.xml"
+        line: |
+          <Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+                     SSLEnabled="true"
+                     maxThreads="150"
+                     scheme="https" secure="true" clientAuth="false"
+                     sslProtocol="TLS"
+                     keystoreFile="{{ tomcat_installation_dir }}/conf/private_key.key"
+                     keystorePass="{{ ssl_keystore_password }}"
+                     keystoreType="PKCS12"
+                     keystoreAlias="tomcat"
+                     truststoreFile="{{ tomcat_installation_dir }}/conf/certificate.crt"
+                     truststorePass="{{ ssl_keystore_password }}"
+                     truststoreType="PKCS12"
+                     truststoreAlias="tomcat"
+                     sslEnabledProtocols="TLSv1.2,TLSv1.3"
+                     SSLHonorCipherOrder="true"
+                     ciphers="TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+                     disableUploadTimeout="true" />
+        insertafter: '<!-- Define a SSL HTTP/1.1 Connector on port 8443 -->'
+        state: present
+      notify:
+        - Restart Tomcat
+
+    - name: Adjust Tomcat Memory Settings
+      lineinfile:
+        path: "{{ tomcat_installation_dir }}/bin/setenv.sh"
+        line: 'CATALINA_OPTS="-Xms{{ tomcat_memory_initial }} -Xmx{{ tomcat_memory_max }}"'
+        state: present
+
+  handlers:
+    - name: Restart Tomcat
+      service:
+        name: tomcat
+        state: restarted

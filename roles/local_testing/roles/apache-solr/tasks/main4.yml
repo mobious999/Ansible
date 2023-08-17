@@ -1,0 +1,66 @@
+---
+- name: Install Apache Solr in SolrCloud Mode with SSL
+  hosts: your_solr_hosts
+  become: yes
+
+  vars:
+    solr_version: 8.11.1  # Adjust the version
+    solr_home: /opt/solr
+    solr_install_dir: "{{ solr_home }}/solr-{{ solr_version }}"
+    solr_service_name: solr
+    solr_service_file: /etc/systemd/system/{{ solr_service_name }}.service
+    keystore_path: /opt/keystore/p12/uat.p12
+    keystore_password: changemenow
+
+  tasks:
+    - name: Create Solr installation directory
+      file:
+        path: "{{ solr_install_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Download and extract Solr
+      get_url:
+        url: "https://downloads.apache.org/lucene/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz"
+        dest: "{{ solr_home }}/"
+        mode: '0644'
+      args:
+        creates: "{{ solr_install_dir }}"
+
+    - name: Create symbolic link to Solr installation
+      file:
+        src: "{{ solr_install_dir }}"
+        dest: "{{ solr_home }}/solr"
+        state: link
+
+    - name: Generate solr.in.sh with SSL configuration
+      template:
+        src: solr.in.sh.j2
+        dest: "{{ solr_home }}/solr/bin/solr.in.sh"
+        mode: '0755'
+
+    - name: Create Solr service file
+      copy:
+        content: |
+          [Unit]
+          Description=Apache Solr
+          After=network.target
+
+          [Service]
+          ExecStart={{ solr_home }}/solr/bin/solr start -cloud
+          ExecStop={{ solr_home }}/solr/bin/solr stop
+          User=eis
+          Group=eis
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: "{{ solr_service_file }}"
+      notify: Enable and Start Solr
+
+  handlers:
+    - name: Enable and Start Solr
+      systemd:
+        name: "{{ solr_service_name }}"
+        enabled: yes
+        state: started

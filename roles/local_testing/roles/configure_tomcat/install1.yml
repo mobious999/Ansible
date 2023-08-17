@@ -1,0 +1,74 @@
+---
+- name: Install and Configure Apache Tomcat
+  hosts: your_target_hosts
+  become: yes
+
+  vars:
+    tomcat_version: 9.0.50  # Adjust to the desired Tomcat version
+    tomcat_installation_dir: /opt/tomcat/versions
+    tomcat_user: tomcat
+    tomcat_group: tomcat
+    tomcat_mem_initial: 8G
+    tomcat_mem_max: 16G
+
+  tasks:
+    - name: Create Tomcat User and Group
+      user:
+        name: "{{ tomcat_user }}"
+        group: "{{ tomcat_group }}"
+        system: yes
+
+    - name: Download Tomcat from S3
+      get_url:
+        url: "https://your-s3-bucket-url/tomcat/tomcat-{{ tomcat_version }}.tar.gz"
+        dest: /tmp/tomcat-{{ tomcat_version }}.tar.gz
+        mode: 0755
+
+    - name: Extract Tomcat
+      unarchive:
+        src: /tmp/tomcat-{{ tomcat_version }}.tar.gz
+        dest: "{{ tomcat_installation_dir }}"
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_group }}"
+        mode: 0755
+        creates: "{{ tomcat_installation_dir }}/bin"
+
+    - name: Create Symbolic Link
+      file:
+        src: "{{ tomcat_installation_dir }}/apache-tomcat-{{ tomcat_version }}"
+        dest: "{{ tomcat_installation_dir }}/current"
+        state: link
+
+    - name: Set Tomcat Memory Settings
+      lineinfile:
+        path: "{{ tomcat_installation_dir }}/current/bin/setenv.sh"
+        line: 'CATALINA_OPTS="-Xms{{ tomcat_mem_initial }} -Xmx{{ tomcat_mem_max }}"'
+        create: yes
+
+    - name: Set Permissions
+      file:
+        path: "{{ item }}"
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_group }}"
+        recurse: yes
+      with_items:
+        - "{{ tomcat_installation_dir }}/current"
+        - "{{ tomcat_installation_dir }}/current/bin"
+
+    - name: Create Systemd Service File
+      template:
+        src: tomcat.service.j2  # Path to your template file
+        dest: /etc/systemd/system/tomcat.service
+      notify:
+        - Reload systemd
+
+    - name: Enable Tomcat Service
+      systemd:
+        name: tomcat
+        enabled: yes
+        state: started
+
+  handlers:
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes

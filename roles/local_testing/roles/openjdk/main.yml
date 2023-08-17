@@ -1,0 +1,31 @@
+---
+- name: Install OpenJDK 11 and Set JAVA_HOME
+  hosts: your_target_hosts
+  become: yes
+
+  vars:
+    openjdk_version: 11.0.12  # Adjust to the desired OpenJDK version
+    java_home_path: /usr/lib/jvm/java-11-openjdk-{{ openjdk_version }}
+
+  tasks:
+    - name: Install OpenJDK 11
+      dnf:
+        name: java-{{ openjdk_version }}-openjdk
+        state: present
+
+    - name: Get Java RPM package name
+      shell: rpm -qa | grep java | grep openjdk | head -n 1
+      register: java_rpm
+
+    - name: Set JAVA_HOME environment variable
+      lineinfile:
+        path: /etc/environment
+        line: 'JAVA_HOME="{{ java_home_path }}"'
+      when: java_rpm.stdout != ""
+
+    - name: Create java.sh file in /etc/profile.d
+      template:
+        src: java.sh.j2  # Path to your template file
+        dest: /etc/profile.d/java.sh
+        mode: 0644
+      when: java_rpm.stdout != ""

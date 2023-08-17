@@ -1,0 +1,17 @@
+pipeline {
+    agent any
+    
+    triggers {
+        cron('*/10 * * * *')  // Schedule to run every 10 minutes
+    }
+    
+    stages {
+        stage('Run Bash Script') {
+            steps {
+                script {
+                    sh './your-bash-script.sh'  // Replace with your script's path
+                }
+            }
+        }
+    }
+}

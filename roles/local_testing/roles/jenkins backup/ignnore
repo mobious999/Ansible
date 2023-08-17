@@ -1,0 +1,28 @@
+# Ignore system and hidden files
+.*
+*.swp
+.DS_Store
+
+# Ignore build and temporary files
+target/
+build/
+*.log
+
+# Ignore credentials and sensitive information
+secrets/
+credentials.xml
+
+# Ignore workspace and build artifacts
+workspace/
+builds/
+jobs/*/builds/
+jobs/*/workspace/
+
+# Include essential Jenkins configuration and jobs
+config.xml
+jobs/*/config.xml
+
+# Ignore plugins and plugin data
+plugins/
+hudson.plugins/
+.hudson/

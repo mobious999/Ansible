@@ -1,0 +1,51 @@
+---
+- name: Configure Tomcat for Optimal Performance
+  hosts: your_tomcat_hosts
+  become: yes
+
+  vars:
+    java_home: /path/to/your/java_home
+    tomcat_home: /path/to/your/tomcat_home
+
+  tasks:
+    - name: Set ulimits for Tomcat user
+      become_user: tomcat
+      shell: |
+        echo "tomcat soft nofile 65536" | sudo tee -a /etc/security/limits.conf
+        echo "tomcat hard nofile 65536" | sudo tee -a /etc/security/limits.conf
+        ulimit -n 65536
+
+    - name: Configure Tomcat connectors
+      lineinfile:
+        path: "{{ tomcat_home }}/conf/server.xml"
+        line: |
+          <Connector port="80" protocol="HTTP/1.1"
+                     connectionTimeout="20000"
+                     redirectPort="443" />
+          <Connector port="443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+                     maxThreads="400"
+                     SSLEnabled="true"
+                     scheme="https" secure="true"
+                     keystoreFile="/path/to/your/keystore.p12"
+                     keystorePass="your_keystore_password"
+                     clientAuth="false" sslProtocol="TLS" />
+      notify: Restart Tomcat
+
+    - name: Configure Tomcat memory settings
+      lineinfile:
+        path: "{{ tomcat_home }}/bin/setenv.sh"
+        line: |
+          CATALINA_OPTS="-Xms16g -Xmx16g -XX:+UseG1GC"
+
+    - name: Optimize Tomcat JVM options
+      lineinfile:
+        path: "{{ tomcat_home }}/bin/setenv.sh"
+        line: |
+          CATALINA_OPTS="$CATALINA_OPTS -XX:MaxMetaspaceSize=256m -XX:+UseStringDeduplication -XX:ParallelGCThreads=4"
+        insertbefore: '# You may pass JVM startup parameters to Tomcat here.'
+
+  handlers:
+    - name: Restart Tomcat
+      systemd:
+        name: tomcat
+        state: restarted

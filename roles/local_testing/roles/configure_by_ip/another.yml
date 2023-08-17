@@ -1,0 +1,29 @@
+---
+- name: Perform tasks based on third octet of IP address
+  hosts: localhost
+  gather_facts: yes
+
+  tasks:
+    - name: Extract third octet of IP address
+      set_fact:
+        third_octet: "{{ ansible_default_ipv4.address.split('.')[2] }}"
+
+    - name: Set variables based on third octet
+      set_fact:
+        variable_based_on_third_octet: "{{ 'value1' if third_octet|int == 10 else
+                                           'value2' if third_octet|int == 20 else
+                                           'value3' if third_octet|int == 30 else
+                                           'default_value' }}"
+
+    - name: Install packages based on third octet
+      yum:
+        name: "{{ 'package1' if third_octet|int == 10 else
+                  'package2' if third_octet|int == 20 else
+                  'package3' if third_octet|int == 30 else
+                  '' }}"
+      when: third_octet|int in [10, 20, 30]
+
+    - name: Debug tasks
+      debug:
+        msg: "Perform tasks for IP {{ ansible_default_ipv4.address }} with third octet {{ third_octet }}, variable value {{ variable_based_on_third_octet }}, and installed package"
+      when: third_octet|int in [10, 20, 30]

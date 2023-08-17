@@ -1,0 +1,64 @@
+---
+- name: Configure Apache Tomcat
+  hosts: your_target_hosts
+  become: yes
+
+  vars:
+    tomcat_installation_dir: "/opt/tomcat"  # Change to your Tomcat installation directory
+    tomcat_user: "tomcat"
+    tomcat_group: "tomcat"
+    tomcat_memory_initial: "4G"
+    tomcat_memory_max: "16G"
+    tomcat_max_threads: 200
+    tomcat_min_spare_threads: 25
+    tomcat_max_spare_threads: 75
+    tomcat_accept_count: 100
+
+  tasks:
+    - name: Adjust Tomcat Memory Settings
+      lineinfile:
+        path: "{{ tomcat_installation_dir }}/bin/setenv.sh"
+        line: 'CATALINA_OPTS="-Xms{{ tomcat_memory_initial }} -Xmx{{ tomcat_memory_max }}"'
+        state: present
+      notify:
+        - Restart Tomcat
+
+    - name: Optimize Tomcat Connector Configuration
+      lineinfile:
+        path: "{{ tomcat_installation_dir }}/conf/server.xml"
+        line: |
+          <Connector port="8080" protocol="HTTP/1.1"
+                     connectionTimeout="20000"
+                     redirectPort="8443"
+                     maxThreads="{{ tomcat_max_threads }}"
+                     minSpareThreads="{{ tomcat_min_spare_threads }}"
+                     maxSpareThreads="{{ tomcat_max_spare_threads }}"
+                     acceptCount="{{ tomcat_accept_count }}"
+                     disableUploadTimeout="true" />
+        insertafter: '<!-- Define a non-SSL HTTP/1.1 Connector on port 8080 -->'
+        state: present
+      notify:
+        - Restart Tomcat
+
+    - name: Enable Compression
+      lineinfile:
+        path: "{{ tomcat_installation_dir }}/conf/server.xml"
+        line: |
+          <Connector ...>
+              ...
+              compression="on"
+              compressionMinSize="2048"
+              noCompressionUserAgents="gozilla, traviata"
+              compressableMimeType="text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json"
+              ...
+          </Connector>
+        insertafter: '<!-- Define a non-SSL HTTP/1.1 Connector on port 8080 -->'
+        state: present
+      notify:
+        - Restart Tomcat
+
+  handlers:
+    - name: Restart Tomcat
+      service:
+        name: tomcat
+        state: restarted
