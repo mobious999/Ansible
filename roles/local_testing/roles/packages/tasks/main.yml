@@ -12,8 +12,4 @@
         - unzip
         - unzip
       state: latest
-  - name: Install A specific version of java-11-openjdk-11
-    dnf:
-      name: java-11-openjdk-11.0.17.0.8-1.el8_7.x86_64
-        state: present
-        allow_downgrade: true
+      update_cache: true
