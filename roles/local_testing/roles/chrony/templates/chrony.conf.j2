@@ -1,0 +1,10 @@
+# AWS recommended Chrony configuration
+
+server 169.254.169.123 iburst prefer
+server time.amazon.pool.ntp.org iburst
+
+# Other settings
+driftfile /var/lib/chrony/drift
+makestep 1.0 3
+rtcsync
+logdir /var/log/chrony
