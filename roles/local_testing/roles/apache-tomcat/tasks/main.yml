@@ -1,0 +1,52 @@
+---
+- name: Ensure required packages are installed
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - unzip
+    - wget
+  become_user: root
+
+- name: Create Tomcat directory
+  file:
+    path: /opt/tomcat/versions
+    state: directory
+    owner: eis
+    group: eis
+    mode: '0755'
+
+- name: Download Tomcat archive
+  get_url:
+    url: "https://archive.apache.org/dist/tomcat/tomcat-{{ tomcat_version }}/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz"
+    dest: /tmp/apache-tomcat-{{ tomcat_version }}.tar.gz
+
+- name: Extract Tomcat archive
+  unarchive:
+    src: /tmp/apache-tomcat-{{ tomcat_version }}.tar.gz
+    dest: /opt/tomcat
+    remote_src: yes
+    creates: "/opt/tomcat/latest/apache-tomcat-{{ tomcat_version }}"
+
+- name: Create symbolic link for Tomcat
+  file:
+    src: "/opt/tomcat/versions/apache-tomcat-{{ tomcat_version }}"
+    dest: /opt/tomcat/latest
+    state: link
+    force: yes
+
+- name: Configure environment settings
+  lineinfile:
+    dest: /etc/environment
+    line: 'CATALINA_HOME="/opt/tomcat/latest"'
+    state: present
+    create: yes
+
+- name: Set environment variable for PATH
+  lineinfile:
+    dest: /etc/environment
+    line: 'PATH="$PATH:$CATALINA_HOME/bin"'
+    state: present
+
+- name: Reload shell for environment changes
+  shell: source /etc/environment

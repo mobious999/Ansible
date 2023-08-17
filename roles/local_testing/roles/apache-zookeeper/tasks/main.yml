@@ -1,0 +1,86 @@
+---
+- name: Install Apache ZooKeeper
+  hosts: zookeeper_servers
+  become: yes
+
+  vars:
+    zookeeper_version: "3.7.0"   # Change this to the desired ZooKeeper version
+    zookeeper_user: "zookeeper"
+    zookeeper_group: "zookeeper"
+    zookeeper_install_dir: "/opt/zookeeper"
+
+  tasks:
+    - name: Create ZooKeeper user
+      user:
+        name: "{{ zookeeper_user }}"
+        home: "{{ zookeeper_install_dir }}"
+        shell: "/bin/bash"
+        system: yes
+        state: present
+
+    - name: Download Apache ZooKeeper
+      get_url:
+        url: "https://downloads.apache.org/zookeeper/zookeeper-{{ zookeeper_version }}/apache-zookeeper-{{ zookeeper_version }}.tar.gz"
+        dest: "/tmp/zookeeper.tar.gz"
+
+    - name: Extract ZooKeeper
+      unarchive:
+        src: "/tmp/zookeeper.tar.gz"
+        dest: "{{ zookeeper_install_dir }}"
+        remote_src: yes
+        owner: "{{ zookeeper_user }}"
+        group: "{{ zookeeper_group }}"
+
+    - name: Set ZooKeeper permissions
+      file:
+        path: "{{ zookeeper_install_dir }}"
+        state: directory
+        recurse: yes
+        owner: "{{ zookeeper_user }}"
+        group: "{{ zookeeper_group }}"
+        mode: "0755"
+
+    - name: Create data directory for ZooKeeper
+      file:
+        path: "{{ zookeeper_install_dir }}/data"
+        state: directory
+        owner: "{{ zookeeper_user }}"
+        group: "{{ zookeeper_group }}"
+        mode: "0755"
+
+    - name: Create log directory for ZooKeeper
+      file:
+        path: "{{ zookeeper_install_dir }}/logs"
+        state: directory
+        owner: "{{ zookeeper_user }}"
+        group: "{{ zookeeper_group }}"
+        mode: "0755"
+
+    - name: Copy ZooKeeper configuration file
+      copy:
+        src: "zoo.cfg"
+        dest: "{{ zookeeper_install_dir }}/conf/zoo.cfg"
+        owner: "{{ zookeeper_user }}"
+        group: "{{ zookeeper_group }}"
+
+    - name: Start ZooKeeper
+      shell: "{{ zookeeper_install_dir }}/bin/zkServer.sh start"
+      async: 300
+      poll: 0
+      become_user: "{{ zookeeper_user }}"
+      ignore_errors: yes
+      register: zk_start
+
+    - name: Wait for ZooKeeper to start
+      async_status:
+        jid: "{{ zk_start.ansible_job_id }}"
+      register: zk_start_result
+      until: zk_start_result.finished
+      retries: 60
+      delay: 5
+
+    - name: Check ZooKeeper start result
+      debug:
+        msg: "ZooKeeper started successfully!"
+      when: zk_start_result.finished and zk_start_result.returncode == 0
+
