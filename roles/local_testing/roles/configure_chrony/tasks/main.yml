@@ -1,9 +1,5 @@
 ---
 - name: Configure Chrony with AWS Best Practices
-  hosts: your_target_hosts
-  become: yes
-
-  tasks:
     - name: Install Chrony package
       package:
         name: chrony
