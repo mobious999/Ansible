@@ -1,0 +1,33 @@
+---
+- name: Set security limits for Tomcat user
+  become: yes
+
+  vars:
+    tomcat_user: eis
+    tomcat_soft_nofile: 4096
+    tomcat_hard_nofile: 8192
+    tomcat_soft_nproc: 2048
+    tomcat_hard_nproc: 4096
+    tomcat_core_dump: unlimited
+
+  tasks:
+    - name: Set security limits for Tomcat user
+      pam_limits:
+        dest: /etc/security/limits.conf
+        limit_type: '-'
+        domain: "{{ tomcat_user }}"
+        item: "{{ item }}"
+      loop:
+        - "nofile soft {{ tomcat_soft_nofile }}"
+        - "nofile hard {{ tomcat_hard_nofile }}"
+        - "nproc soft {{ tomcat_soft_nproc }}"
+        - "nproc hard {{ tomcat_hard_nproc }}"
+        - "core unlimited"
+      notify:
+        - Reload PAM
+
+  handlers:
+    - name: Reload PAM
+      service:
+        name: systemd-logind
+        state: restarted

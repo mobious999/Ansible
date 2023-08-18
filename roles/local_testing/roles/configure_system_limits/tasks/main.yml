@@ -1,2 +1,41 @@
 ---
-# tasks file for configure_system_limits
+- name: Set system limits for Tomcat application server
+  hosts: your_target_host
+  become: yes
+
+  vars:
+    tomcat_user: tomcat
+    tomcat_soft_nofile: 4096
+    tomcat_hard_nofile: 8192
+    tomcat_soft_nproc: 2048
+    tomcat_hard_nproc: 4096
+    tomcat_core_dump: 0
+
+  tasks:
+    - name: Set limits for Tomcat user in limits.conf
+      lineinfile:
+        dest: /etc/security/limits.conf
+        regexp: '^{{ tomcat_user }}.*'
+        line: "{{ tomcat_user }} soft nofile {{ tomcat_soft_nofile }}"
+        state: present
+      notify:
+        - Reload PAM
+
+    - name: Set limits for Tomcat user in limits.d
+      copy:
+        dest: "/etc/security/limits.d/{{ tomcat_user }}.conf"
+        content: |
+          {{ tomcat_user }} soft nofile {{ tomcat_soft_nofile }}
+          {{ tomcat_user }} hard nofile {{ tomcat_hard_nofile }}
+          {{ tomcat_user }} soft nproc {{ tomcat_soft_nproc }}
+          {{ tomcat_user }} hard nproc {{ tomcat_hard_nproc }}
+          {{ tomcat_user }} hard core {{ tomcat_core_dump }}
+      notify:
+        - Reload PAM
+
+  handlers:
+    - name: Reload PAM
+      service:
+        name: systemd-logind
+        state: restarted
+
