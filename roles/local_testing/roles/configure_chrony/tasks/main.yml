@@ -1,14 +1,19 @@
 ---
-  - name: Install Chrony package
-    package:
-      name: chrony
-      state: present
+- name: Configure Chrony with AWS Best Practices
+  hosts: all
+  become: yes
 
-  - name: Copy Chrony configuration file
-    template:
-      src: chrony.conf.j2
-      dest: /etc/chrony/chrony.conf
-    notify: Restart Chrony
+  tasks:
+    - name: Install Chrony package
+      package:
+        name: chrony
+        state: present
+
+    - name: Copy Chrony configuration file
+      template:
+        src: chrony.conf.j2
+        dest: /etc/chrony/chrony.conf
+      notify: Restart Chrony
 
   handlers:
     - name: Restart Chrony
