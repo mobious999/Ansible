@@ -1,7 +1,6 @@
 ---
-- name: Configure Chrony with AWS Best Practices
   hosts: all
-  become: yes
+  become: true
 
   tasks:
     - name: Install Chrony package
