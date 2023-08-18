@@ -1,2 +1,14 @@
 ---
-# defaults file for chrony
+chrony_allow_enable: false
+chrony_allow:
+chrony_disable_ntpd: true
+chrony_enable: true
+chrony_log_enable: false
+chrony_log: measurements statistics tracking
+chrony_logdir: /var/log/chrony/
+chrony_ntp_servers:
+  - 169.254.169.123 iburst prefer
+  - time.amazon.pool.ntp.org iburst
+chrony_rtcsync: false
+chrony_smearing: false
+chrony_timezone: "UTC"
