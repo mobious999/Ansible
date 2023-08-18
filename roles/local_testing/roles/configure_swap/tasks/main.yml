@@ -1,29 +1,107 @@
 ---
-- name: Get total memory size
-  shell: "grep MemTotal /proc/meminfo | awk '{print $2}'"
-  changed_when: false
-  register: total_memory
-
-- name: Calculate swap size and swappiness
-  set_fact:
-    swap_size: "{{ (total_memory.stdout|int) / 1024 * 2 }}"  # Adjust the multiplier as needed
-    swappiness: "{{ '10' if total_memory.stdout|int > 819200 else '60' }}"  # Adjust the threshold as needed
-
-- name: Create swap file
-  command: "dd if=/dev/zero of=/swapfile bs=1M count={{ swap_size }}"
-
-- name: Set permissions on swap file
-  command: "chmod 600 /swapfile"
-
-- name: Set up swap space
-  command: "mkswap /swapfile"
-
-- name: Enable swap
-  command: "swapon /swapfile"
-
-- name: Configure swappiness
+- name: Configure kernel parameters
   sysctl:
-    name: vm.swappiness
-    value: "{{ swappiness }}"
-    state: present
+    sysctl_file: '{{ item.0.path }}'
+    name: '{{ item.1 | regex_replace("=.*$", "") }}'
+    value: '{{ item.1 | regex_replace("^.*=", "") }}'
+    state: 'present'
+    reload: 'yes'
+  with_subelements:
+    - '{{ sysctl }}'
+    - 'configuration'
+  when: sysctl|d() and item.0.name|d() and item.0.name == 'swap'
+  tags:
+    - configuration
+    - swap
+    - sysctl
+
+- name: Disable swap file(s) optionally
+  shell: test -f {{ item.path | d(item) }} && swapoff {{ item.path | d(item) }} || true
+  changed_when: False
+  with_items: '{{ swap }}'
+  when: swap|d() and item.state|d() and item.state == 'absent'
+  tags:
+    - configuration
+    - swap
+
+- name: Remove swap file(s)
+  file:
+    path: '{{ item.path | d(item) }}'
+    state: 'absent'
+  with_items: '{{ swap }}'
+  when: swap|d() and item.state|d() and item.state == 'absent'
+  tags:
+    - installation
+    - swap
+
+- name: Create local directory if not exist
+  file:
+    path: /local
+    state: directory
+  tags:
+    - installation
+    - swap
+
+- name: Allocate swap file(s)
+  command: |
+    {% if "dd" in swap_method %}
+    dd if=/dev/zero of={{ item.path | d(item) }} bs=1M count={{ item.size | d(swap_size) }}
+    {% else %}
+    fallocate -l {{ item.size | d(swap_size) | int * 1024 * 1024 }} {{ item.path | d(item) }}
+    {% endif %}
+  args:
+    creates: '{{ item.path | d(item) }}'
+  register: swap_file
+  with_items: '{{ swap }}'
+  when: swap|d() and (item.state is undefined or item.state != 'absent')
+  tags:
+    - installation
+    - swap
+
+- name: Enforce permissions on swap file(s)
+  file:
+    path: '{{ item_path | d(item) }}'
+    mode: '0600'
+    owner: 'root'
+    group: 'root'
+    state: 'file'
+  with_items: '{{ swap }}'
+  when: swap|d() and (item.state is undefined or item.state != 'absent')
+  tags:
+    - configuration
+    - swap
+
+- name: Initialize swap file(s)
+  command: mkswap {{ item.item.path | d(item.item) }}
+  register: swap_files
+  with_items: '{{ swap_file.results }}'
+  when: ((swap|d() and swap_file|d() and item.changed | bool) and
+         (item.state is undefined or item.state != 'absent'))
+  tags:
+    - configuration
+    - swap
+
+- name: Enable swap file(s)
+  command: swapon -p {{ item.item.priority | d(swap_priority) }} {{ item.item.path | d(item.item) }}
+  with_items: '{{ swap_file.results }}'
+  when: ((swap|d() and swap_file|d() and item.changed | bool) and
+         (item.state is undefined or item.state != 'absent'))
+  tags:
+    - configuration
+    - swap
+
+- name: Manage swap files in /etc/fstab
+  mount:
+    src: '{{ item.path | d(item) }}'
+    name: 'none'
+    fstype: 'swap'
+    opts: 'sw,nofail,pri={{ item.priority | d(swap_priority) }}'
+    dump: '0'
+    passno: '0'
+    state: '{{ item.state | d("present") }}'
+  with_items: '{{ swap }}'
+  when: swap|d()
+  tags:
+    - configuration
+    - swap
 
