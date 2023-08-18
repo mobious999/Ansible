@@ -52,15 +52,13 @@
   failed_when: false
   when: chrony_disable_ntpd and ansible_distribution|lower != "fedora"
 
-- name: Disable ntpd
-  ansible.builtin.service:
-    name: '{{ ntp_service }}'
-    state: stopped
-    enabled: false
-  when:
-    - ntpd_running is changed
-
-## Config chrony
+# - name: Disable ntpd
+#   ansible.builtin.service:
+#     name: '{{ ntp_service }}'
+#     state: stopped
+#     enabled: false
+#   when:
+#     - ntpd_running is changed
 
 - name: Chrony config
   ansible.builtin.template:
