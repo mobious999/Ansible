@@ -1,71 +1,66 @@
 ---
-- name: Install Apache Solr in SolrCloud Mode with Symbolic Links
-  hosts: solr_servers
+- name: Install Apache Solr in SolrCloud Mode with SSL
+  hosts: your_solr_hosts
   become: yes
 
   vars:
-    solr_version: "8.11.1"   # Change this to the desired Solr version
-    solr_user: "solr"
-    solr_group: "solr"
-    solr_install_dir: "/opt/solr"
-    solr_home_link: "/opt/versions/latest"  # Change this to the desired symlink location
+    solr_version: 8.11.1  # Adjust the version
+    solr_home: /opt/solr/versions
+    solr_install_dir: "{{ solr_home }}/solr-{{ solr_version }}"
+    solr_service_name: solr
+    solr_service_file: /etc/systemd/system/{{ solr_service_name }}.service
+    keystore_path: /opt/keystore/p12/uat.p12
+    keystore_password: changemenow
 
   tasks:
-    - name: Create Solr user
-      user:
-        name: "{{ solr_user }}"
-        home: "{{ solr_install_dir }}"
-        shell: "/bin/bash"
-        system: yes
-        state: present
-
-    - name: Download Solr
-      get_url:
-        url: "https://downloads.apache.org/lucene/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz"
-        dest: "/tmp/solr.tgz"
-
-    - name: Extract Solr
-      unarchive:
-        src: "/tmp/solr.tgz"
-        dest: "{{ solr_install_dir }}"
-        remote_src: yes
-        owner: "{{ solr_user }}"
-        group: "{{ solr_group }}"
-
-    - name: Set Solr permissions
+    - name: Create Solr installation directory
       file:
         path: "{{ solr_install_dir }}"
         state: directory
-        recurse: yes
-        owner: "{{ solr_user }}"
-        group: "{{ solr_group }}"
-        mode: "0755"
+        mode: '0755'
 
-    - name: Create a symlink to the Solr installation
+    - name: Download and extract Solr
+      get_url:
+        url: "https://downloads.apache.org/lucene/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz"
+        dest: "{{ solr_home }}/"
+        mode: '0644'
+      args:
+        creates: "{{ solr_install_dir }}"
+
+    - name: Create symbolic link to Solr installation
       file:
         src: "{{ solr_install_dir }}"
-        dest: "{{ solr_home_link }}"
+        dest: "{{ solr_home }}/latest"
         state: link
-        owner: "{{ solr_user }}"
-        group: "{{ solr_group }}"
 
-    - name: Start Solr in SolrCloud mode
-      shell: "{{ solr_install_dir }}/bin/solr start -cloud -p 8983 -s {{ solr_install_dir }}/example/cloud/node1 -h localhost"
-      async: 300
-      poll: 0
-      become_user: "{{ solr_user }}"
-      ignore_errors: yes
-      register: solr_start
+    - name: Generate solr.in.sh with SSL configuration
+      template:
+        src: solr.in.sh.j2
+        dest: "{{ solr_home }}/solr/bin/solr.in.sh"
+        mode: '0755'
 
-    - name: Wait for Solr to start
-      async_status:
-        jid: "{{ solr_start.ansible_job_id }}"
-      register: solr_start_result
-      until: solr_start_result.finished
-      retries: 60
-      delay: 5
+    - name: Create Solr service file
+      copy:
+        content: |
+          [Unit]
+          Description=Apache Solr
+          After=network.target
 
-    - name: Check Solr start result
-      debug:
-        msg: "Solr started successfully!"
-      when: solr_start_result.finished and solr_start_result.returncode == 0
+          [Service]
+          ExecStart={{ solr_home }}/solr/bin/solr start -cloud
+          ExecStop={{ solr_home }}/solr/bin/solr stop
+          User=eis
+          Group=eis
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: "{{ solr_service_file }}"
+      notify: Enable and Start Solr
+
+  handlers:
+    - name: Enable and Start Solr
+      systemd:
+        name: "{{ solr_service_name }}"
+        enabled: yes
+        state: started
