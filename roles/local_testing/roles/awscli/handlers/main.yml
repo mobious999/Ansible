@@ -1,2 +1,3 @@
 ---
-# handlers file for awscli
+- name: Update shell environment
+  ansible.builtin.command: "bash /etc/profile.d/awscli.sh"

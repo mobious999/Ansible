@@ -32,6 +32,6 @@
     group: root
   notify: Update shell environment
 
-handlers:
-  - name: Update shell environment
-    ansible.builtin.command: "bash /etc/profile.d/awscli.sh"
+# handlers:
+#   - name: Update shell environment
+#     ansible.builtin.command: "bash /etc/profile.d/awscli.sh"
