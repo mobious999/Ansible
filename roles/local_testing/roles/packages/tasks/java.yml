@@ -1,7 +1,0 @@
----
-  - name: Installing Java openjdk 
-    dnf:
-      name:
-        name: wget-1.19.5-7.el8
-        state: present
-        allow_downgrade: true
