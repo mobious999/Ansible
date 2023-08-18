@@ -1,23 +1,54 @@
 ---
-- name: Manage users
-  user:
-    name: "{{ item.username }}"
-    password: "{{ (item.password | password_hash('sha512')) | default(user_pass | password_hash('sha512')) }}"
-    comment: "{{ item.comment | default(omit) }}"
-    home: "{{ item.home | default(user_home ~ '/' ~ item.username ) }}"
-    shell: "{{ item.shell | default(user_shell) }}"
-    system: "{{ item.system | default(user_system) }}"
-    force: "{{ item.force | default(user_force) }}"
-    remove: "{{ item.remove | default(user_remove) }}"
-    state: "{{ item.state | default(user_state) }}"
-  with_items: "{{ user }}"
-  tags:
-    - configuration
-    - user
-  no_log: "{{ no_log }}"
+- name: Create user, group, and authorized keys for eis
+  hosts: your_target_host
+  become: yes
 
-- name: Chown eis
-  file:
-    path: /home/eis
-    owner: eis
-    group: eis
+  vars:
+    eis_user: eis
+    eis_group: eis
+    authorized_keys_file: /home/{{ eis_user }}/.ssh/authorized_keys
+    public_key_path: /path/to/your/public_key.pub  # Replace with the actual path to the public key file
+
+  tasks:
+    - name: Create group
+      group:
+        name: "{{ eis_group }}"
+        state: present
+
+    - name: Create user
+      user:
+        name: "{{ eis_user }}"
+        group: "{{ eis_group }}"
+        createhome: yes
+        shell: /bin/bash
+        state: present
+
+    - name: Ensure SSH directory exists for the user
+      file:
+        path: /home/{{ eis_user }}/.ssh
+        state: directory
+        owner: "{{ eis_user }}"
+        group: "{{ eis_group }}"
+        mode: '0700'
+
+    - name: Add authorized keys for the user
+      authorized_key:
+        user: "{{ eis_user }}"
+        state: present
+        key: "{{ lookup('file', public_key_path) }}"
+
+    - name: Set permissions for authorized_keys file
+      file:
+        path: "{{ authorized_keys_file }}"
+        state: file
+        owner: "{{ eis_user }}"
+        group: "{{ eis_group }}"
+        mode: '0600'
+        
+    - name: Set permissions for .ssh directory
+      file:
+        path: /home/{{ eis_user }}/.ssh
+        state: directory
+        owner: "{{ eis_user }}"
+        group: "{{ eis_group }}"
+        mode: '0700'
