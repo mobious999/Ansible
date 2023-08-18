@@ -1,39 +1,39 @@
 ---
-- name: Create sudoers file for user eis
+- name: Create sudoers.d file for user eis
   become: yes
+  become_method: sudo
+  template:
+    src: sudoers.eis.j2
+    dest: /etc/sudoers.d/eis
+    owner: root
+    group: root
+    mode: 0440
 
-  tasks:
-    - name: Create sudoers file
-      blockinfile:
-        path: /etc/sudoers.d/eis
-        block: |
-          # Sudoers file for user eis
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl start dxp.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl status dxp.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl stop dxp.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl restart dxp.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl start tomcat.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl status tomcat.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl stop tomcat.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl restart tomcat.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl start solr.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl status solr.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl stop solr.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl restart solr.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl start zookeeper.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl status zookeeper.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl stop zookeeper.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl restart zookeeper.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl start nessusagent.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl status nessusagent.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl stop nessusagent.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/systemctl restart nessusagent.service
-          eis             ALL=(ALL)       NOPASSWD: /bin/rpm       query installed rpm to make java home dynamic
-      notify: 
-        - Restart sudo service
-          
-  handlers:
-    - name: Restart sudo service
-      service:
-        name: sudo
-        state: restarted
+- name: Add custom lines to sudoers.d file for user eis
+  blockinfile:
+    path: /etc/sudoers.d/eis
+    block: |
+      # Custom rules for user eis
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl start dxp.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl status dxp.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl stop dxp.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl restart dxp.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl start tomcat.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl status tomcat.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl stop tomcat.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl restart tomcat.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl start solr.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl status solr.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl stop solr.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl restart solr.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl start zookeeper.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl status zookeeper.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl stop zookeeper.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl restart zookeeper.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl start nessusagent.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl status nessusagent.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl stop nessusagent.service
+      eis ALL=(ALL) NOPASSWD: /bin/systemctl restart nessusagent.service
+      eis ALL=(ALL) NOPASSWD: /bin/rpm  #query installed rpm to make java home dynamic
+  become: yes
+  become_method: sudo
