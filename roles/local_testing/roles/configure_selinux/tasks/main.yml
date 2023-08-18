@@ -4,6 +4,6 @@
   changed_when: false
   ignore_errors: true
 
-- name: Disable SELinux
-  selinux:
+- name: Disabling SELinux state
+  ansible.posix.selinux:
     state: disabled
