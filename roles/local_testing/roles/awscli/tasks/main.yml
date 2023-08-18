@@ -27,7 +27,7 @@
   register: aws_cli_unarchive_installer
 
 - name: Install awscli package.
-  shell: python /tmp/awscli-bundle/install -i --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+  shell: python /tmp/awscli-bundle/aws/install -i --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
   args:
     creates: /usr/local/aws-cli
   when: aws_cli_unarchive_installer.changed
