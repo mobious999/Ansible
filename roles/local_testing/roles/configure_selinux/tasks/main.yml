@@ -4,7 +4,7 @@
 
   vars:
     selinux_mode: enforcing  # Options: enforcing, permissive, disabled
-    selinux_state: enabled   # Options: enabled, disabled
+    selinux_state: disabled   # Options: enabled, disabled
     selinux_policy: targeted # Options: targeted, strict (May vary based on your system)
 
   tasks:
