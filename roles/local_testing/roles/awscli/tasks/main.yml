@@ -27,9 +27,9 @@
   register: aws_cli_unarchive_installer
 
 - name: Install awscli package.
-  shell: python /tmp/awscli-bundle/install
+  shell: python /tmp/awscli-bundle/install -i --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
   args:
-    creates: /usr/bin/aws
+    creates: /usr/local/aws-cli
   when: aws_cli_unarchive_installer.changed
 
 - name: Creating the file to add aws to the path
