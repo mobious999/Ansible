@@ -1,2 +1,20 @@
 ---
-# defaults file for configure_swap
+sysctl:
+  - name: swap
+    path: "/etc/sysctl.d/swap.conf"
+    configuration:
+      - "vm.swappiness=60"
+      - "vm.vfs_cache_pressure=100"
+
+# Swap creation method
+swap_method: "dd"
+
+# Swap files array
+swap: ["/swapfile"]
+
+# Swap file priority
+swap_priority: "-1"
+
+# Swap file size
+swap_size: "8196"
+environment_swap: "true"

@@ -22,14 +22,14 @@
   register: aws_cli_download_bundle
 
 - name: Unarchive the installer.
-  unarchive: src=/tmp/awscli-bundle.zip dest=/tmp copy=no creates=/tmp/awscli-bundle
+  unarchive: src=/tmp/awscli-bundle.zip dest=/tmp copy=no creates=/tmp/aws list_files=true
   when: aws_cli_download_bundle.changed
   register: aws_cli_unarchive_installer
 
 - name: Install awscli package.
-  shell: python /tmp/awscli-bundle/install
+  shell: python /tmp/awscli-bundle/install -i --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
   args:
-    creates: /usr/bin/aws
+    creates: /usr/local/aws-cli
   when: aws_cli_unarchive_installer.changed
 
 - name: Creating the file to add aws to the path
@@ -62,7 +62,7 @@
   become_user: root
   lineinfile:
     dest: /etc/environment
-    line: 'PATH="$PATH:$AWS_HOME/bin"'
+    line: 'PATH="$PATH:$AWS_HOME"'
     state: present
   when: ansible_os_family == 'Debian'
 
@@ -71,6 +71,6 @@
   become_user: root
   lineinfile:
     dest: /etc/profile.d/aws.sh
-    line: 'export PATH="$PATH:$AWS_HOME/bin"'
+    line: 'export PATH="$PATH:$AWS_HOME"'
     state: present
   when: ansible_os_family == 'RedHat'
