@@ -18,7 +18,7 @@
   when: ansible_os_family == "RedHat"
 
 - name: Download the awscli bundle.
-  get_url: url=https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip dest=/tmp/awscli-bundle.zip
+  get_url: url=https://s3.amazonaws.com/aws-cli/awscli-bundle.zip dest=/tmp/awscli-bundle.zip
   register: aws_cli_download_bundle
 
 - name: Unarchive the installer.
