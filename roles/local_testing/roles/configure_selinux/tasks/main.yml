@@ -4,8 +4,10 @@
   changed_when: false
   ignore_errors: true
 
-- name: Disable selinux
-  selinux:
-    state: disabled
-  register: _selinux_module
+- name: Disable SELinux
+  lineinfile:
+    dest: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: 'SELINUX=disabled'
+
 
