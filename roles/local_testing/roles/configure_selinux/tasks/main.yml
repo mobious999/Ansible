@@ -1,30 +1,27 @@
 ---
 - name: Configure SELinux and create backup
-  become: yes
-
   vars:
     selinux_mode: enforcing  # Options: enforcing, permissive, disabled
     selinux_state: disabled   # Options: enabled, disabled
     selinux_policy: targeted # Options: targeted, strict (May vary based on your system)
 
-  tasks:
-    - name: Create backup of SELinux configuration
-      command: cp -p /etc/selinux/config /etc/selinux/config.bak
-      changed_when: false
-      ignore_errors: yes
+- name: Create backup of SELinux configuration
+  command: cp -p /etc/selinux/config /etc/selinux/config.bak
+  changed_when: false
+  ignore_errors: yes
 
-    - name: Update SELinux configuration
-      lineinfile:
-        path: /etc/selinux/config
-        regexp: "{{ item.regexp }}"
-        line: "{{ item.line }}"
-      with_items:
-        - { regexp: '^SELINUX=', line: 'SELINUX={{ selinux_mode }}' }
-        - { regexp: '^SELINUXTYPE=', line: 'SELINUXTYPE={{ selinux_policy }}' }
+- name: Update SELinux configuration
+  lineinfile:
+    path: /etc/selinux/config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - { regexp: '^SELINUX=', line: 'SELINUX={{ selinux_mode }}' }
+    - { regexp: '^SELINUXTYPE=', line: 'SELINUXTYPE={{ selinux_policy }}' }
 
-    - name: Set SELinux state
-      selinux:
-        policy: "{{ selinux_policy }}"
-        state: "{{ selinux_state }}"
-      when: selinux_state == 'enabled'
+- name: Set SELinux state
+  selinux:
+    policy: "{{ selinux_policy }}"
+    state: "{{ selinux_state }}"
+  when: selinux_state == 'enabled'
 

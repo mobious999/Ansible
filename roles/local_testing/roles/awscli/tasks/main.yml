@@ -18,7 +18,7 @@
   when: ansible_os_family == "RedHat"
 
 - name: Download the awscli bundle.
-  get_url: url=https://s3.amazonaws.com/aws-cli/awscli-bundle.zip dest=/tmp/awscli-bundle.zip
+  get_url: url=https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip dest=/tmp/awscli-bundle.zip
   register: aws_cli_download_bundle
 
 - name: Unarchive the installer.
@@ -62,7 +62,7 @@
   become_user: root
   lineinfile:
     dest: /etc/environment
-    line: 'PATH="$PATH:$AWS_HOME/bin"'
+    line: 'PATH="$PATH:$AWS_HOME"'
     state: present
   when: ansible_os_family == 'Debian'
 
@@ -71,6 +71,6 @@
   become_user: root
   lineinfile:
     dest: /etc/profile.d/aws.sh
-    line: 'export PATH="$PATH:$AWS_HOME/bin"'
+    line: 'export PATH="$PATH:$AWS_HOME"'
     state: present
   when: ansible_os_family == 'RedHat'
