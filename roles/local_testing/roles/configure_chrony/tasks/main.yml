@@ -1,21 +1,88 @@
+# vim: ai et ts=2 st=2 sw=2 :
 ---
-  hosts: all
-  become: true
+- name: Check if we are running supported os
+  ansible.builtin.assert:
+    fail_msg: "{{ role_name }} only supports ubuntu versions 18, 20, 22, centos versions 7, and RHEL version 8!"
+    success_msg: "{{ role_name }} supports {{ ansible_distribution }} version {{ ansible_distribution_version }}"
+    quiet: "{{ not ansible_check_mode }}"
+    that:
+      ( ansible_distribution|lower == "ubuntu" and ansible_distribution_version|int in [18, 20, 22] )
+      or ( ansible_distribution|lower == "centos" and ansible_distribution_major_version|int in [7, 8] )
+      or ( ansible_distribution|lower == "redhat" and ansible_distribution_major_version|int in [8, 9] )
+      or ( ansible_distribution|lower == "fedora" and ansible_distribution_major_version|int in [38] )
 
-  tasks:
-    - name: Install Chrony package
-      package:
-        name: chrony
-        state: present
+- name: Chrony variables for ubuntu
+  ansible.builtin.set_fact:
+    chrony_path: /etc/chrony/
+    chrony_service: chrony
+    ntp_service: ntp
+  when: ansible_os_family|lower == "debian"
 
-    - name: Copy Chrony configuration file
-      template:
-        src: chrony.conf.j2
-        dest: /etc/chrony/chrony.conf
-      notify: Restart Chrony
+- name: Chrony variables for centos
+  ansible.builtin.set_fact:
+    chrony_path: /etc/
+    chrony_service: chronyd
+    ntp_service: ntpd
+  when: ansible_os_family|lower == "redhat"
 
-  handlers:
-    - name: Restart Chrony
-      systemd:
-        name: chronyd
-        state: restarted
+## Install chrony
+
+- name: Install chrony on ubuntu
+  ansible.builtin.apt:
+    name: chrony
+    cache_valid_time: 3600
+    update_cache: true
+  when: ansible_os_family|lower == "debian"
+
+- name: Install chrony on centos and redhat
+  ansible.builtin.yum:
+    name: chrony
+  when:
+    - ansible_os_family|lower == "redhat" and ansible_distribution|lower != "fedora"
+
+## Disable old ntpd
+
+- name: Check ntpd is running
+  ansible.builtin.shell: |
+    pgrep ntpd
+  args:
+    warn: false
+  register: ntpd_running
+  changed_when: ntpd_running.rc == 0
+  failed_when: false
+  when: chrony_disable_ntpd and ansible_distribution|lower != "fedora"
+
+- name: Disable ntpd
+  ansible.builtin.service:
+    name: '{{ ntp_service }}'
+    state: stopped
+    enabled: false
+  when:
+    - ntpd_running is changed
+
+## Config chrony
+
+- name: Chrony config
+  ansible.builtin.template:
+    src: 'chrony.conf.j2'
+    dest: '{{ chrony_path }}/chrony.conf'
+    mode: '0644'
+  register: chrony_conf_file
+
+- name: Enable chrony service and start
+  ansible.builtin.service:
+    name: '{{ chrony_service }}'
+    state: '{{ "started" if chrony_enable else "stopped" }}'
+    enabled: '{{ chrony_enable }}'
+
+- name: Restart chrony when config is changed
+  ansible.builtin.service:
+    name: '{{ chrony_service }}'
+    state: restarted
+  when: chrony_conf_file is changed
+
+## Set timezone
+
+- name: Set timezone
+  community.general.timezone:
+    name: '{{ chrony_timezone }}'
