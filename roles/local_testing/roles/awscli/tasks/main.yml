@@ -22,12 +22,12 @@
   register: aws_cli_download_bundle
 
 - name: Unarchive the installer.
-  unarchive: src=/tmp/awscli-bundle.zip dest=/tmp copy=no creates=/tmp/awscli-bundle
+  unarchive: src=/tmp/awscli-bundle.zip dest=/tmp copy=no creates=/tmp/aws list_files=true
   when: aws_cli_download_bundle.changed
   register: aws_cli_unarchive_installer
 
 - name: Install awscli package.
-  shell: python /tmp/awscli-bundle/aws/install -i --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+  shell: python /tmp/awscli-bundle/install -i --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
   args:
     creates: /usr/local/aws-cli
   when: aws_cli_unarchive_installer.changed
