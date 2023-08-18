@@ -1,29 +1,11 @@
 ---
-- name: Get total memory size
-  shell: "grep MemTotal /proc/meminfo | awk '{print $2}'"
-  changed_when: false
-  register: total_memory
+- name: Check the amount of memory
+  ansible.builtin.setup:
+  register: memory_info
 
-- name: Calculate swap size and swappiness
+- name: Calculate swap size
   set_fact:
-    swap_size: "{{ (total_memory.stdout|int) / 1024 * 2 }}"  # Adjust the multiplier as needed
-    swappiness: "{{ '10' if total_memory.stdout|int > 819200 else '60' }}"  # Adjust the threshold as needed
+    swap_size_mb: "{{ (memory_info.ansible_facts['ansible_memory_mb']['real'] * 0.25) | round | int }}"
 
-- name: Create swap file
-  command: "dd if=/dev/zero of=/swapfile bs=1M count={{ swap_size }}"
-
-- name: Set permissions on swap file
-  command: "chmod 600 /swapfile"
-
-- name: Set up swap space
-  command: "mkswap /swapfile"
-
-- name: Enable swap
-  command: "swapon /swapfile"
-
-- name: Configure swappiness
-  sysctl:
-    name: vm.swappiness
-    value: "{{ swappiness }}"
-    state: present
-
+- name: Configure swap based on memory
+  include_tasks: "{{ ansible_distribution | lower }}.yml"

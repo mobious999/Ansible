@@ -1,2 +1,6 @@
 ---
-# defaults file for apache-zookeeper
+zookeeper_install_dir: /opt/zookeeper
+zookeeper_version: 3.6.3
+zookeeper_data_dir: /opt/zookeeper/data
+zookeeper_conf_dir: /opt/zookeeper/conf
+

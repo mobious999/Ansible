@@ -1,0 +1,5 @@
+---
+- name: Disable SELinux
+  hosts: your_target_hosts
+  roles:
+    - my_selinux_role

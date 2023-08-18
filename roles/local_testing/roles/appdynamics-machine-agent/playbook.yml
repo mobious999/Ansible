@@ -1,0 +1,5 @@
+---
+- name: Install and Configure AppDynamics Machine Agent
+  hosts: your_target_hosts
+  roles:
+    - my_appdynamics_role

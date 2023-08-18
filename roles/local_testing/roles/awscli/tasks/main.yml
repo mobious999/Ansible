@@ -1,76 +1,37 @@
 ---
-- name: Install AWS CLI dependencies if not already installed
-  apt:
-    name:
-      - unzip
-      - python3
-      - python3-pip
-    state: present
-  when: ansible_os_family == "Debian"
+- name: Check if AWS CLI v2 is installed
+  command: aws --version
+  register: aws_cli_installed
+  ignore_errors: true
 
-- name: Install AWS CLI dependencies if not already installed
-  yum:
-    name:
-      - unzip
-      - python3
-      - python3-pip
-    state: present
-  when: ansible_os_family == "RedHat"
+- name: Download AWS CLI v2 installer
+  get_url:
+    url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+    dest: /tmp/awscli-exe-linux-x86_64.zip
+  when: aws_cli_installed.rc != 0
 
-- name: Download the awscli bundle.
-  get_url: url=https://s3.amazonaws.com/aws-cli/awscli-bundle.zip dest=/tmp/awscli-bundle.zip
-  register: aws_cli_download_bundle
+- name: Unzip AWS CLI v2 installer
+  ansible.builtin.unarchive:
+    src: /tmp/awscli-exe-linux-x86_64.zip
+    dest: /tmp/aws-cli
+    remote_src: yes
+  when: aws_cli_installed.rc != 0
 
-- name: Unarchive the installer.
-  unarchive: src=/tmp/awscli-bundle.zip dest=/tmp copy=no creates=/tmp/aws list_files=true
-  when: aws_cli_download_bundle.changed
-  register: aws_cli_unarchive_installer
-
-- name: Install awscli package.
-  shell: python /tmp/awscli-bundle/install -i --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+- name: Install AWS CLI v2
+  ansible.builtin.command: /tmp/aws-cli/aws/install
   args:
-    creates: /usr/local/aws-cli
-  when: aws_cli_unarchive_installer.changed
+    creates: /usr/local/bin/aws
+  when: aws_cli_installed.rc != 0
 
-- name: Creating the file to add aws to the path
-  file:
-    path: "/etc/profile.d/aws.sh"
-    state: touch
-    mode: 0644
+- name: Add AWS CLI v2 to PATH using profile.d
+  ansible.builtin.copy:
+    content: "export PATH=$PATH:/usr/local/bin/aws"
+    dest: /etc/profile.d/awscli.sh
+    mode: '0755'
     owner: root
+    group: root
+  notify: Update shell environment
 
-- name: Set environment variables for Aws Cli (for Debian-based systems)
-  become: true
-  become_user: root
-  lineinfile:
-    dest: /etc/environment
-    line: 'AWS_HOME="/usr/local/bin"'
-    state: present
-  when: ansible_os_family == 'Debian'
-
-- name: Set environment variables for Aws Cli (for RedHat-based systems)
-  become: true
-  become_user: root
-  lineinfile:
-    dest: /etc/profile.d/aws.sh
-    line: 'export AWS_HOME="/usr/local/bin"'
-    state: present
-  when: ansible_os_family == 'RedHat'
-
-- name: Add Aws Cli executable to PATH (for Debian-based systems)
-  become: true
-  become_user: root
-  lineinfile:
-    dest: /etc/environment
-    line: 'PATH="$PATH:$AWS_HOME"'
-    state: present
-  when: ansible_os_family == 'Debian'
-
-- name: Add Aws Cli executable to PATH (for RedHat-based systems)
-  become: true
-  become_user: root
-  lineinfile:
-    dest: /etc/profile.d/aws.sh
-    line: 'export PATH="$PATH:$AWS_HOME"'
-    state: present
-  when: ansible_os_family == 'RedHat'
+handlers:
+  - name: Update shell environment
+    ansible.builtin.command: "bash /etc/profile.d/awscli.sh"

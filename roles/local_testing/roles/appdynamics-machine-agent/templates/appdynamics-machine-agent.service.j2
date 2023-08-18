@@ -1,0 +1,14 @@
+[Unit]
+Description=AppDynamics Machine Agent
+After=network.target
+
+[Service]
+Type=simple
+User=eis
+Group=eis
+WorkingDirectory=/opt/appdynamics/machineagent
+ExecStart=/opt/appdynamics/machineagent/bin/machine-agent -c /opt/appdynamics/machineagent/conf/machine-agent.yml
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,13 +1,13 @@
-# Machine Agent configuration file
-# See the full list of properties at https://docs.appdynamics.com/display/PRO21/Machine+Agent+Properties
-#
-# Controller connection properties
-controller:
-  host: "{{ appd_controller_host }}"
-  port: "{{ appd_controller_port }}"
-  useSsl: true
-  accountName: "{{ appd_account_name }}"
-  accountAccessKey: "{{ appd_account_access_key }}"
-  applicationName: "your_application_name"
-  tierName: "your_tier_name"
-  nodeName: "your_node_name"
+# AppDynamics Machine Agent Configuration
+appdynamics:
+  controller:
+    host: {{ controller_host }}
+    port: {{ controller_port }}
+    ssl: {{ controller_ssl | default(true) }}
+    account-name: {{ account_name }}
+    account-access-key: {{ account_access_key }}
+    application-name: {{ application_name }}
+    tier-name: {{ tier_name }}
+    node-name: {{ inventory_hostname }}
+
+# ... other configuration parameters

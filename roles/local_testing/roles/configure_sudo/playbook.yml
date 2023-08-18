@@ -1,0 +1,7 @@
+---
+- name: Configure sudoers for user eis
+  hosts: your_target_hosts
+  tasks:
+    - name: Include the sudoers role
+      include_role:
+        name: my_sudoers_role

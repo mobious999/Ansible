@@ -1,0 +1,5 @@
+---
+- name: Configure Swap File
+  hosts: your_target_hosts
+  roles:
+    - my_swap_config_role

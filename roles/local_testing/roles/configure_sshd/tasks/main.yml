@@ -1,27 +1,23 @@
 ---
-- name: Configure SSH daemon
-  become: yes
+- name: Update SSH configuration file
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
+    - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication yes' }
+    - { regexp: '^#?PermitEmptyPasswords', line: 'PermitEmptyPasswords no' }
+    - { regexp: '^#?ChallengeResponseAuthentication', line: 'ChallengeResponseAuthentication no' }
+    - { regexp: '^#?UsePAM', line: 'UsePAM yes' }
+    - { regexp: '^#?X11Forwarding', line: 'X11Forwarding no' }
+    - { regexp: '^#?AllowTcpForwarding', line: 'AllowTcpForwarding yes' }
+    - { regexp: '^#?PermitUserEnvironment', line: 'PermitUserEnvironment no' }
+    - { regexp: '^#?ClientAliveInterval', line: 'ClientAliveInterval 300' }
+    - { regexp: '^#?ClientAliveCountMax', line: 'ClientAliveCountMax 3' }
+    - { regexp: '^#?AllowUsers', line: 'AllowUsers yourusername' }
 
-  tasks:
-    - name: Update SSH configuration file
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: "{{ item.regexp }}"
-        line: "{{ item.line }}"
-      with_items:
-        - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
-        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication yes' }
-        - { regexp: '^#?PermitEmptyPasswords', line: 'PermitEmptyPasswords no' }
-        - { regexp: '^#?ChallengeResponseAuthentication', line: 'ChallengeResponseAuthentication no' }
-        - { regexp: '^#?UsePAM', line: 'UsePAM yes' }
-        - { regexp: '^#?X11Forwarding', line: 'X11Forwarding no' }
-        - { regexp: '^#?AllowTcpForwarding', line: 'AllowTcpForwarding yes' }
-        - { regexp: '^#?PermitUserEnvironment', line: 'PermitUserEnvironment no' }
-        - { regexp: '^#?ClientAliveInterval', line: 'ClientAliveInterval 300' }
-        - { regexp: '^#?ClientAliveCountMax', line: 'ClientAliveCountMax 3' }
-        - { regexp: '^#?AllowUsers', line: 'AllowUsers yourusername' }
-
-    - name: Reload SSH service
-      service:
-        name: sshd
-        state: reloaded
+- name: Reload SSH service
+  service:
+    name: sshd
+    state: reloaded

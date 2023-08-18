@@ -1,0 +1,33 @@
+---
+- name: Set limits for the eis user
+  pam_limits:
+    domain: 'eis'
+    limit_type: 'hard'
+    limit_item: 'nofile'
+    value: 65535
+
+- name: Set ulimit for eis user
+  systemd:
+    name: eis
+    dropin: yes
+    state: present
+    content: |
+      [Service]
+      LimitNOFILE=65535
+  when: ansible_os_family == 'RedHat'
+
+- name: Configure eis user limits
+  ansible.builtin.copy:
+    dest: /etc/security/limits.d/eis.conf
+    content: |
+      eis soft nofile 65535
+      eis hard nofile 65535
+      eis soft nproc 4096
+      eis hard nproc 4096
+  when: ansible_os_family == 'RedHat'
+
+- name: Reload systemd after ulimit changes
+  ansible.builtin.service:
+    name: systemd-journald
+    state: restarted
+  when: ansible_os_family == 'RedHat'

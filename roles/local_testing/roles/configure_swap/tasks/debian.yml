@@ -1,0 +1,23 @@
+---
+- name: Configure swap on Debian/Ubuntu
+  ansible.builtin.command: "fallocate -l {{ swap_size_mb }}M /swapfile"
+  become: yes
+
+- name: Set permissions on the swapfile
+  ansible.builtin.file:
+    path: /swapfile
+    mode: '0600'
+  become: yes
+
+- name: Configure swap settings in /etc/fstab
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    line: '/swapfile none swap sw 0 0'
+    regexp: '^/swapfile'
+  become: yes
+  notify: Activate swap
+
+handlers:
+  - name: Activate swap
+    ansible.builtin.command: "swapon -a"
+    become: yes

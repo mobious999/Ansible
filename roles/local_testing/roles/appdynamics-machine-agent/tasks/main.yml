@@ -1,48 +1,47 @@
 ---
-- name: Install AppDynamics Machine Agent
-  hosts: your_target_servers
+- name: Create directory for AppDynamics Machine Agent
+  file:
+    path: /opt/appdynamics/machineagent
+    state: directory
+    owner: eis
+    group: eis
+    mode: '0755'
   become: yes
 
+- name: Unzip AppDynamics Machine Agent
+  unarchive:
+    src: "{{ playbook_dir }}/files/appdynamics-machine-agent.zip"
+    dest: /opt/appdynamics/machineagent
+    remote_src: yes
+  become: yes
+
+- name: Generate Machine Agent configuration
+  template:
+    src: machine-agent.yml.j2
+    dest: /opt/appdynamics/machineagent/conf/machine-agent.yml
   vars:
-    appd_machine_agent_version: "20.12.0"  # Change this to the desired Machine Agent version
-    appd_controller_host: "your_controller_host"
-    appd_controller_port: "your_controller_port"
-    appd_account_name: "your_account_name"
-    appd_account_access_key: "your_access_key"
-    appd_machine_agent_install_dir: "/opt/appdynamics/machine_agent"
+    controller_host: "your-controller-host"
+    controller_port: 8090
+    account_name: "your-account-name"
+    account_access_key: "your-account-access-key"
+    application_name: "your-application-name"
+    tier_name: "your-tier-name"
+  become: yes
 
-  tasks:
-    - name: Create AppDynamics Machine Agent directory
-      file:
-        path: "{{ appd_machine_agent_install_dir }}"
-        state: directory
-        owner: "your_user"
-        group: "your_group"
-        mode: "0755"
+- name: Create systemd service file
+  template:
+    src: appdynamics-machine-agent.service.j2
+    dest: /etc/systemd/system/appdynamics-machine-agent.service
+  become: yes
 
-    - name: Download AppDynamics Machine Agent
-      get_url:
-        url: "https://download.appdynamics.com/onpremises/public/latest/machine-agent/{{ appd_machine_agent_version }}/machineagent-bundle-{{ appd_machine_agent_version }}.zip"
-        dest: "/tmp/machine-agent.zip"
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+  become: yes
 
-    - name: Extract AppDynamics Machine Agent
-      unarchive:
-        src: "/tmp/machine-agent.zip"
-        dest: "{{ appd_machine_agent_install_dir }}"
-        remote_src: yes
-        creates: "{{ appd_machine_agent_install_dir }}/machineagent"
-
-    - name: Configure AppDynamics Machine Agent
-      template:
-        src: machine-agent.yaml.j2
-        dest: "{{ appd_machine_agent_install_dir }}/machineagent/conf/machine-agent.yaml"
-        owner: "your_user"
-        group: "your_group"
-        mode: "0644"
-
-    - name: Start AppDynamics Machine Agent
-      shell: "{{ appd_machine_agent_install_dir }}/machineagent/bin/machine-agent"
-      async: 300
-      poll: 0
-      become_user: "your_user"
-      ignore_errors: yes
+- name: Enable and start the AppDynamics Machine Agent service
+  systemd:
+    name: appdynamics-machine-agent
+    enabled: yes
+    state: started
+  become: yes

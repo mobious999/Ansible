@@ -1,13 +1,22 @@
 ---
-- name: Create backup of SELinux configuration
-  command: cp -p /etc/selinux/config /etc/selinux/config.bak
-  changed_when: false
-  ignore_errors: true
+- name: Backup SELinux configuration file
+  ansible.builtin.copy:
+    src: /etc/selinux/config
+    dest: /etc/selinux/config.backup
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
 
-- name: Disable SELinux
-  lineinfile:
-    dest: /etc/selinux/config
+- name: Set SELinux mode to disabled
+  ansible.builtin.selinux:
+    policy: targeted
+    state: disabled
+  become: yes
+
+- name: Configure SELinux
+  ansible.builtin.replace:
+    path: /etc/selinux/config
     regexp: '^SELINUX='
     line: 'SELINUX=disabled'
-
-
+  become: yes

@@ -1,0 +1,5 @@
+---
+- name: Configure Apache ZooKeeper
+  hosts: your_target_hosts
+  roles:
+    - my_zookeeper_role

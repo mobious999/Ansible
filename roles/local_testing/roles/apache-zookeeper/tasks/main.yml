@@ -1,86 +1,82 @@
 ---
-- name: Install Apache ZooKeeper
-  hosts: zookeeper_servers
+- name: Create ZooKeeper home directory
+  file:
+    path: "/opt/zookeeper/"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
   become: yes
 
-  vars:
-    zookeeper_version: "3.7.0"   # Change this to the desired ZooKeeper version
-    zookeeper_user: "zookeeper"
-    zookeeper_group: "zookeeper"
-    zookeeper_install_dir: "/opt/zookeeper"
+- name: Create ZooKeeper version directory
+  file:
+    path: "/opt/zookeeper/versions"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  become: yes
 
-  tasks:
-    - name: Create ZooKeeper user
-      user:
-        name: "{{ zookeeper_user }}"
-        home: "{{ zookeeper_install_dir }}"
-        shell: "/bin/bash"
-        system: yes
-        state: present
+- name: Create ZooKeeper data directory
+  file:
+    path: "/opt/zookeeper/"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  become: yes
 
-    - name: Download Apache ZooKeeper
-      get_url:
-        url: "https://downloads.apache.org/zookeeper/zookeeper-{{ zookeeper_version }}/apache-zookeeper-{{ zookeeper_version }}.tar.gz"
-        dest: "/tmp/zookeeper.tar.gz"
+- name: Create ZooKeeper conf directory
+  file:
+    path: "/opt/zookeeper/"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  become: yes
 
-    - name: Extract ZooKeeper
-      unarchive:
-        src: "/tmp/zookeeper.tar.gz"
-        dest: "{{ zookeeper_install_dir }}"
-        remote_src: yes
-        owner: "{{ zookeeper_user }}"
-        group: "{{ zookeeper_group }}"
+- name: Download the ZooKeeper archive
+  get_url:
+    url: "https://downloads.apache.org/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz"
+    dest: "/tmp"
+  become: yes
 
-    - name: Set ZooKeeper permissions
-      file:
-        path: "{{ zookeeper_install_dir }}"
-        state: directory
-        recurse: yes
-        owner: "{{ zookeeper_user }}"
-        group: "{{ zookeeper_group }}"
-        mode: "0755"
+- name: Unarchive ZooKeeper
+  unarchive:
+    src: "/tmp/apache-zookeeper-3.6.3-bin.tar.gz"
+    dest: "/opt/zookeeper/versions"
+    remote_src: yes
+  become: yes
 
-    - name: Create data directory for ZooKeeper
-      file:
-        path: "{{ zookeeper_install_dir }}/data"
-        state: directory
-        owner: "{{ zookeeper_user }}"
-        group: "{{ zookeeper_group }}"
-        mode: "0755"
+- name: Set symbolic link to latest ZooKeeper installation
+  file:
+    src: "/opt/zookeeper/versions/apache-zookeeper-3.6.3-bin"
+    dest: "/opt/zookeeper/latest"
+    state: link
+    force: yes
+  become: yes
 
-    - name: Create log directory for ZooKeeper
-      file:
-        path: "{{ zookeeper_install_dir }}/logs"
-        state: directory
-        owner: "{{ zookeeper_user }}"
-        group: "{{ zookeeper_group }}"
-        mode: "0755"
+- name: Create ZooKeeper configuration file
+  template:
+    src: zoo.cfg.j2
+    dest: "/opt/zookeeper/conf/zoo.cfg"
+  become: yes
 
-    - name: Copy ZooKeeper configuration file
-      copy:
-        src: "zoo.cfg"
-        dest: "{{ zookeeper_install_dir }}/conf/zoo.cfg"
-        owner: "{{ zookeeper_user }}"
-        group: "{{ zookeeper_group }}"
+- name: Create ZooKeeper systemd service file
+  template:
+    src: zookeeper.service.j2
+    dest: /etc/systemd/system/zookeeper.service
+  become: yes
 
-    - name: Start ZooKeeper
-      shell: "{{ zookeeper_install_dir }}/bin/zkServer.sh start"
-      async: 300
-      poll: 0
-      become_user: "{{ zookeeper_user }}"
-      ignore_errors: yes
-      register: zk_start
+- name: Set permissions for ZooKeeper service file
+  file:
+    path: /etc/systemd/system/zookeeper.service
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
 
-    - name: Wait for ZooKeeper to start
-      async_status:
-        jid: "{{ zk_start.ansible_job_id }}"
-      register: zk_start_result
-      until: zk_start_result.finished
-      retries: 60
-      delay: 5
-
-    - name: Check ZooKeeper start result
-      debug:
-        msg: "ZooKeeper started successfully!"
-      when: zk_start_result.finished and zk_start_result.returncode == 0
-
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+  become: yes
