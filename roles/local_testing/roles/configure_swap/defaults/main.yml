@@ -1,20 +1,8 @@
 ---
-sysctl:
-  - name: swap
-    path: "/etc/sysctl.d/swap.conf"
-    configuration:
-      - "vm.swappiness=60"
-      - "vm.vfs_cache_pressure=100"
+swap_file_path: /swapfile
+swap_file_size_mb: '512'
+swap_swappiness: '60'
+swap_file_state: present
+swap_file_create_command: "dd if=/dev/zero of={{ swap_file_path }} bs=1M count={{ swap_file_size_mb }}"
 
-# Swap creation method
-swap_method: "dd"
-
-# Swap files array
-swap: ["/swapfile"]
-
-# Swap file priority
-swap_priority: "-1"
-
-# Swap file size
-swap_size: "8196"
-environment_swap: "true"
+swap_test_mode: false
