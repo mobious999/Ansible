@@ -17,7 +17,7 @@
         append: yes
       when: ansible_os_family == "Debian"
 
-    - name: Add 'ansible' user to the sudo group (Linux)
+    - name: Add 'ansible' user to the wheel group (Linux)
       user:
         name: ansible
         groups: wheel
