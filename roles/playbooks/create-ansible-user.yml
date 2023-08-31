@@ -1,0 +1,47 @@
+---
+- name: Create user, grant sudo access, and copy public key
+  hosts: your_target_hosts
+  become: yes
+
+  tasks:
+    - name: Create the 'ansible' user
+      user:
+        name: ansible
+        state: present
+        createhome: yes
+
+    - name: Add 'ansible' user to the sudo group (Linux)
+      user:
+        name: ansible
+        groups: sudo
+        append: yes
+      when: ansible_os_family == "Debian" or ansible_os_family == "RedHat"
+
+    - name: Add 'ansible' user to the wheel group (macOS)
+      user:
+        name: ansible
+        groups: wheel
+        append: yes
+      when: ansible_system == "Darwin"
+
+    - name: Set up passwordless sudo access (Linux)
+      lineinfile:
+        dest: /etc/sudoers
+        line: 'ansible ALL=(ALL) NOPASSWD: ALL'
+        state: present
+        validate: visudo -cf %s
+      when: ansible_os_family == "Debian" or ansible_os_family == "RedHat"
+
+    - name: Set up passwordless sudo access (macOS)
+      lineinfile:
+        dest: /etc/sudoers
+        line: 'ansible ALL=(ALL) NOPASSWD: ALL'
+        state: present
+        validate: visudo -cf %s
+      when: ansible_system == "Darwin"
+
+    - name: Copy public key from existing user to ansible user
+      authorized_key:
+        user: ansible
+        state: present
+        key: "{{ lookup('file', '/home/existing_user/.ssh/id_rsa.pub') }}"
