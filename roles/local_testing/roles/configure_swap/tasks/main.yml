@@ -1,11 +1,14 @@
 ---
-- name: Check the amount of memory
-  ansible.builtin.setup:
-  register: memory_info
+- name: Manage swap file entry in fstab.
+  mount:
+    name: none
+    src: "{{ swap_file_path }}"
+    fstype: swap
+    opts: sw
+    state: "{{ swap_file_state }}"
 
-- name: Calculate swap size
-  set_fact:
-    swap_size_mb: "{{ (memory_info.ansible_facts['ansible_memory_mb']['real'] * 0.25) | round | int }}"
+- include_tasks: disable.yml
+  when: swap_file_state == 'absent'
 
-- name: Configure swap based on memory
-  include_tasks: "{{ ansible_distribution | lower }}.yml"
+- include_tasks: enable.yml
+  when: swap_file_state == 'present'
